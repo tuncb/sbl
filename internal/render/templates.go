@@ -21,11 +21,12 @@ type Engine struct {
 }
 
 type BasePageData struct {
-	Site          site.Config
-	Title         string
-	Description   string
-	CanonicalURL  string
-	StylesheetURL string
+	Site             site.Config
+	Title            string
+	Description      string
+	CanonicalURL     string
+	StylesheetURL    string
+	ExtraStylesheets []string
 }
 
 type PostSummary struct {
@@ -128,40 +129,43 @@ func MakePostSummary(post *content.Post) PostSummary {
 	}
 }
 
-func RenderIndexPage(engine *Engine, cfg site.Config, stylesheetURL string, posts []PostSummary) ([]byte, error) {
+func RenderIndexPage(engine *Engine, cfg site.Config, stylesheetURL string, extraStylesheets []string, posts []PostSummary) ([]byte, error) {
 	return engine.Execute("index.html", ListPageData{
 		BasePageData: BasePageData{
-			Site:          cfg,
-			Title:         cfg.Title,
-			Description:   cfg.Description,
-			CanonicalURL:  cfg.CanonicalURL("/"),
-			StylesheetURL: stylesheetURL,
+			Site:             cfg,
+			Title:            cfg.Title,
+			Description:      cfg.Description,
+			CanonicalURL:     cfg.CanonicalURL("/"),
+			StylesheetURL:    stylesheetURL,
+			ExtraStylesheets: extraStylesheets,
 		},
 		Posts: posts,
 	})
 }
 
-func RenderArchivePage(engine *Engine, cfg site.Config, stylesheetURL string, posts []PostSummary) ([]byte, error) {
+func RenderArchivePage(engine *Engine, cfg site.Config, stylesheetURL string, extraStylesheets []string, posts []PostSummary) ([]byte, error) {
 	return engine.Execute("archive.html", ListPageData{
 		BasePageData: BasePageData{
-			Site:          cfg,
-			Title:         "Archive | " + cfg.Title,
-			Description:   "Archive of posts from " + cfg.Title,
-			CanonicalURL:  cfg.CanonicalURL("/archive/"),
-			StylesheetURL: stylesheetURL,
+			Site:             cfg,
+			Title:            "Archive | " + cfg.Title,
+			Description:      "Archive of posts from " + cfg.Title,
+			CanonicalURL:     cfg.CanonicalURL("/archive/"),
+			StylesheetURL:    stylesheetURL,
+			ExtraStylesheets: extraStylesheets,
 		},
 		Posts: posts,
 	})
 }
 
-func RenderPostPage(engine *Engine, cfg site.Config, stylesheetURL string, post *content.Post, bodyHTML template.HTML, readingTime int) ([]byte, PostSummary, error) {
+func RenderPostPage(engine *Engine, cfg site.Config, stylesheetURL string, extraStylesheets []string, post *content.Post, bodyHTML template.HTML, readingTime int) ([]byte, PostSummary, error) {
 	htmlPage, err := engine.Execute("post.html", PostPageData{
 		BasePageData: BasePageData{
-			Site:          cfg,
-			Title:         post.Title + " | " + cfg.Title,
-			Description:   pickDescription(post),
-			CanonicalURL:  cfg.CanonicalURL(post.CanonicalPath),
-			StylesheetURL: stylesheetURL,
+			Site:             cfg,
+			Title:            post.Title + " | " + cfg.Title,
+			Description:      pickDescription(post),
+			CanonicalURL:     cfg.CanonicalURL(post.CanonicalPath),
+			StylesheetURL:    stylesheetURL,
+			ExtraStylesheets: extraStylesheets,
 		},
 		Post: PostView{
 			Title:       post.Title,
@@ -178,14 +182,15 @@ func RenderPostPage(engine *Engine, cfg site.Config, stylesheetURL string, post 
 	return htmlPage, MakePostSummary(post), nil
 }
 
-func RenderStandalonePage(engine *Engine, cfg site.Config, stylesheetURL string, page *content.Page, bodyHTML template.HTML) ([]byte, error) {
+func RenderStandalonePage(engine *Engine, cfg site.Config, stylesheetURL string, extraStylesheets []string, page *content.Page, bodyHTML template.HTML) ([]byte, error) {
 	return engine.Execute("page.html", StandalonePageData{
 		BasePageData: BasePageData{
-			Site:          cfg,
-			Title:         page.Title + " | " + cfg.Title,
-			Description:   pickPageDescription(page),
-			CanonicalURL:  cfg.CanonicalURL(page.CanonicalPath),
-			StylesheetURL: stylesheetURL,
+			Site:             cfg,
+			Title:            page.Title + " | " + cfg.Title,
+			Description:      pickPageDescription(page),
+			CanonicalURL:     cfg.CanonicalURL(page.CanonicalPath),
+			StylesheetURL:    stylesheetURL,
+			ExtraStylesheets: extraStylesheets,
 		},
 		Page: PageView{
 			Title:    page.Title,
@@ -195,23 +200,25 @@ func RenderStandalonePage(engine *Engine, cfg site.Config, stylesheetURL string,
 	})
 }
 
-func RenderNotFoundPage(engine *Engine, cfg site.Config, stylesheetURL string) ([]byte, error) {
+func RenderNotFoundPage(engine *Engine, cfg site.Config, stylesheetURL string, extraStylesheets []string) ([]byte, error) {
 	return engine.Execute("404.html", BasePageData{
-		Site:          cfg,
-		Title:         "Page not found",
-		Description:   "The page you asked for does not exist or has moved.",
-		CanonicalURL:  cfg.CanonicalURL("/404.html"),
-		StylesheetURL: stylesheetURL,
+		Site:             cfg,
+		Title:            "Page not found",
+		Description:      "The page you asked for does not exist or has moved.",
+		CanonicalURL:     cfg.CanonicalURL("/404.html"),
+		StylesheetURL:    stylesheetURL,
+		ExtraStylesheets: extraStylesheets,
 	})
 }
 
-func RenderTemporaryErrorPage(engine *Engine, cfg site.Config, stylesheetURL string) ([]byte, error) {
+func RenderTemporaryErrorPage(engine *Engine, cfg site.Config, stylesheetURL string, extraStylesheets []string) ([]byte, error) {
 	return engine.Execute("50x.html", BasePageData{
-		Site:          cfg,
-		Title:         "Temporary server problem",
-		Description:   "Please try again in a moment.",
-		CanonicalURL:  cfg.CanonicalURL("/50x.html"),
-		StylesheetURL: stylesheetURL,
+		Site:             cfg,
+		Title:            "Temporary server problem",
+		Description:      "Please try again in a moment.",
+		CanonicalURL:     cfg.CanonicalURL("/50x.html"),
+		StylesheetURL:    stylesheetURL,
+		ExtraStylesheets: extraStylesheets,
 	})
 }
 

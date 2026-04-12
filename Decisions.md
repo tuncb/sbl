@@ -48,3 +48,5 @@
 - Pages share the Markdown, Mermaid, math, and asset pipeline with posts, but they are excluded from the homepage post list, archive, and RSS feed.
 - Pages require `title`; `summary` is optional and is used as page lead text when present.
 - Page-local assets are fingerprinted under `/assets/pages/<slug>/...`.
+- Real KaTeX rendering uses the local Node toolchain plus the repo's `package.json` dependencies at build time, instead of a pure-Go math renderer.
+- KaTeX CSS and fonts are copied into `/assets/vendor/katex-<version>/...` without hashing because the versioned directory already provides stable cache-busting.

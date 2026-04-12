@@ -15,7 +15,7 @@ func TestExtractDisplayMathRejectsUnterminatedBlock(t *testing.T) {
 }
 
 func TestRenderInlineMathRejectsUnterminatedExpression(t *testing.T) {
-	_, err := render.RenderInlineMath("<p>Inline \\(x + 1</p>")
+	_, _, err := render.ExtractInlineMath("Inline \\(x + 1")
 	if err == nil || !strings.Contains(err.Error(), "unterminated inline math delimiter") {
 		t.Fatalf("expected inline math error, got: %v", err)
 	}

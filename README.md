@@ -71,6 +71,16 @@ title: "My Blog"
 base_url: "https://example.com"
 ```
 
+## Tooling
+
+Real math rendering uses KaTeX through the local Node toolchain.
+
+Run this once in the repo before building:
+
+```text
+npm install
+```
+
 ## Usage
 
 1. Create a site folder with `config/site.yaml`, posts under `content/posts/`, and optional standalone pages under `content/pages/`.

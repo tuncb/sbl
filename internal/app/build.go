@@ -74,6 +74,17 @@ func Build(opts BuildOptions) error {
 		}
 	}
 
+	vendorFiles, mathStylesheetURL, err := assets.BuildVendorFiles()
+	if err != nil {
+		return err
+	}
+	for _, file := range vendorFiles {
+		if err := output.WriteFile(outputDir, file.RelPath, file.Bytes); err != nil {
+			return err
+		}
+	}
+	extraStylesheets := []string{mathStylesheetURL}
+
 	postSummaries := make([]render.PostSummary, 0, len(graph.Posts))
 	for _, post := range graph.Posts {
 		postAssetFiles, postAssetURLs, err := assets.BuildPostAssets(post)
@@ -96,7 +107,7 @@ func Build(opts BuildOptions) error {
 			}
 		}
 
-		pageHTML, summary, err := render.RenderPostPage(engine, cfg, stylesheetURL, post, bodyHTML, readingTime)
+		pageHTML, summary, err := render.RenderPostPage(engine, cfg, stylesheetURL, extraStylesheets, post, bodyHTML, readingTime)
 		if err != nil {
 			return err
 		}
@@ -127,7 +138,7 @@ func Build(opts BuildOptions) error {
 			}
 		}
 
-		pageHTML, err := render.RenderStandalonePage(engine, cfg, stylesheetURL, page, bodyHTML)
+		pageHTML, err := render.RenderStandalonePage(engine, cfg, stylesheetURL, extraStylesheets, page, bodyHTML)
 		if err != nil {
 			return err
 		}
@@ -136,7 +147,7 @@ func Build(opts BuildOptions) error {
 		}
 	}
 
-	indexHTML, err := render.RenderIndexPage(engine, cfg, stylesheetURL, postSummaries)
+	indexHTML, err := render.RenderIndexPage(engine, cfg, stylesheetURL, extraStylesheets, postSummaries)
 	if err != nil {
 		return err
 	}
@@ -144,7 +155,7 @@ func Build(opts BuildOptions) error {
 		return err
 	}
 
-	archiveHTML, err := render.RenderArchivePage(engine, cfg, stylesheetURL, postSummaries)
+	archiveHTML, err := render.RenderArchivePage(engine, cfg, stylesheetURL, extraStylesheets, postSummaries)
 	if err != nil {
 		return err
 	}
@@ -152,7 +163,7 @@ func Build(opts BuildOptions) error {
 		return err
 	}
 
-	notFoundHTML, err := render.RenderNotFoundPage(engine, cfg, stylesheetURL)
+	notFoundHTML, err := render.RenderNotFoundPage(engine, cfg, stylesheetURL, extraStylesheets)
 	if err != nil {
 		return err
 	}
@@ -160,7 +171,7 @@ func Build(opts BuildOptions) error {
 		return err
 	}
 
-	tempErrorHTML, err := render.RenderTemporaryErrorPage(engine, cfg, stylesheetURL)
+	tempErrorHTML, err := render.RenderTemporaryErrorPage(engine, cfg, stylesheetURL, extraStylesheets)
 	if err != nil {
 		return err
 	}

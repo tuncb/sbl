@@ -12,6 +12,9 @@
     {{- if .StylesheetURL }}
     <link rel="stylesheet" href="{{ .StylesheetURL }}">
     {{- end }}
+    {{- range .ExtraStylesheets }}
+    <link rel="stylesheet" href="{{ . }}">
+    {{- end }}
     <link rel="alternate" type="application/rss+xml" href="/feed.xml" title="{{ .Site.Title }}">
   </head>
   <body>

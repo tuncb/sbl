@@ -46,6 +46,9 @@ func TestBuildBasicSite(t *testing.T) {
 	if !strings.Contains(indexHTML, `href="/assets/site.`) {
 		t.Fatalf("index page missing hashed stylesheet: %s", indexHTML)
 	}
+	if !strings.Contains(indexHTML, `/assets/vendor/katex-`) || !strings.Contains(indexHTML, `katex.min.css`) {
+		t.Fatalf("index page missing KaTeX stylesheet: %s", indexHTML)
+	}
 	if !strings.Contains(indexHTML, "Hello World") || !strings.Contains(archiveHTML, "Hello World") {
 		t.Fatalf("list pages missing post content")
 	}
@@ -73,6 +76,7 @@ func TestBuildBasicSite(t *testing.T) {
 	if !strings.Contains(swsConfig, `source = "/pages/{*}/index.html"`) {
 		t.Fatalf("generated SWS config missing pages redirect: %s", swsConfig)
 	}
+	testutil.MustGlobOne(t, filepath.Join(root, "public", "assets", "vendor", "katex-*", "katex.min.css"))
 }
 
 func TestBuildRichSite(t *testing.T) {
@@ -89,11 +93,11 @@ func TestBuildRichSite(t *testing.T) {
 	postHTML := testutil.ReadFile(t, filepath.Join(root, "public", "posts", "rich-content", "index.html"))
 	swsConfig := testutil.ReadFile(t, filepath.Join(root, "deploy", "sws.toml"))
 
-	if !strings.Contains(postHTML, `class="math math-inline"`) {
-		t.Fatalf("post page missing inline math markup: %s", postHTML)
+	if !strings.Contains(postHTML, `class="katex"`) {
+		t.Fatalf("post page missing KaTeX markup: %s", postHTML)
 	}
-	if !strings.Contains(postHTML, `class="math math-display"`) {
-		t.Fatalf("post page missing display math markup: %s", postHTML)
+	if strings.Contains(postHTML, `class="math math-display"`) || strings.Contains(postHTML, `class="math math-inline"`) {
+		t.Fatalf("post page still contains placeholder math wrappers: %s", postHTML)
 	}
 	if !strings.Contains(postHTML, `/assets/posts/rich-content/layout.`) {
 		t.Fatalf("post page missing rewritten local asset URL: %s", postHTML)
