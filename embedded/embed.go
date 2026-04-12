@@ -1,0 +1,23 @@
+package embedded
+
+import (
+	"embed"
+	"io/fs"
+)
+
+//go:embed templates/*.html static/* deploy/*
+var files embed.FS
+
+var (
+	Templates = mustSub("templates")
+	Static    = mustSub("static")
+	Deploy    = mustSub("deploy")
+)
+
+func mustSub(dir string) fs.FS {
+	sub, err := fs.Sub(files, dir)
+	if err != nil {
+		panic(err)
+	}
+	return sub
+}

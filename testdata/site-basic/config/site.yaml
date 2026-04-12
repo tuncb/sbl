@@ -1,0 +1,8 @@
+title: "Fixture Blog"
+base_url: "https://example.test"
+description: "A basic fixture site."
+language: "en"
+author: "Fixture Author"
+navigation:
+  - label: "Archive"
+    url: "/archive/"

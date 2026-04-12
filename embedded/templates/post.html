@@ -1,0 +1,19 @@
+{{ define "page" }}{{ template "base" . }}{{ end }}
+
+{{ define "body" -}}
+<article class="post">
+  <header class="post-header">
+    <p class="eyebrow">Post</p>
+    <h1>{{ .Post.Title }}</h1>
+    <div class="post-meta">
+      <span>Published {{ .Post.Date }}</span>
+      {{- if .Post.Updated }}
+      <span>Updated {{ .Post.Updated }}</span>
+      {{- end }}
+      <span>{{ .Post.ReadingTime }} min read</span>
+    </div>
+    <p class="lead">{{ .Post.Summary }}</p>
+  </header>
+  <div class="article-body">{{ .Post.BodyHTML }}</div>
+</article>
+{{- end }}

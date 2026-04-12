@@ -1,0 +1,24 @@
+{{ define "page" }}{{ template "base" . }}{{ end }}
+
+{{ define "body" -}}
+<section class="page-intro">
+  <p class="eyebrow">Archive</p>
+  <h1>Archive</h1>
+</section>
+
+<section class="post-list">
+  {{- if .Posts }}
+  <ul class="post-cards">
+    {{- range .Posts }}
+    <li class="post-card">
+      <p class="post-date">{{ .Date }}</p>
+      <h2><a href="{{ .URL }}">{{ .Title }}</a></h2>
+      <p>{{ .Summary }}</p>
+    </li>
+    {{- end }}
+  </ul>
+  {{- else }}
+  <p>No posts have been published yet.</p>
+  {{- end }}
+</section>
+{{- end }}

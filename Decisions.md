@@ -1,0 +1,43 @@
+# Decisions
+
+## Milestone 0
+
+- The executable is named `sbl` and starts with two subcommands: `build` and `validate`.
+- The first release is post-focused. `content/pages/` stays out of scope until the post pipeline is stable.
+- Embedded default templates, CSS, and a base SWS config ship inside the binary so a minimal site root can build without extra theme files.
+- `base_url` is required for `build` because feeds and sitemaps need canonical absolute URLs. `validate` can run without it.
+- Test fixtures live under `testdata/` and are copied to temporary directories during tests so the builder can freely write `public/` and `deploy/sws.toml`.
+
+## Milestone 1
+
+- Slugs are derived from `content/posts/<slug>/` and must match `^[a-z0-9]+(?:-[a-z0-9]+)*$`.
+- Validation accumulates multiple content errors in one pass instead of stopping at the first failure.
+- Draft posts are excluded by default from the published graph. Links to excluded draft content are treated as broken unless drafts are explicitly included.
+
+## Milestone 2
+
+- Markdown rendering uses Goldmark with auto heading IDs and Chroma-backed syntax highlighting.
+- Raw HTML from post source is not trusted. Trusted HTML is injected only by the build pipeline after Markdown rendering.
+- Template overrides are optional. Embedded templates are the fallback and define the baseline site layout.
+
+## Milestone 3
+
+- Mermaid rendering uses a built-in SVG renderer in v1 so builds and tests do not depend on external tools.
+- Math rendering in v1 converts supported delimiters into semantic HTML wrappers instead of requiring KaTeX at build time.
+- Inline math is extracted before Markdown rendering because Goldmark consumes `\(` and `\)` escapes before an HTML-stage math pass can see them.
+- All cacheable assets use fingerprinted filenames, including post-local files and generated Mermaid SVGs.
+
+## Milestone 4
+
+- The generated site always uses directory-style HTML routes such as `/posts/<slug>/index.html`.
+- RSS, sitemap, robots, and error pages are generated on every build, even for small sites.
+
+## Milestone 5
+
+- `deploy/sws.toml` is generated from a base config plus alias redirects so redirect rules are not hand-maintained.
+- Redirect output is deterministic: alias redirects are sorted before being written.
+- Custom `--out` directories patch the generated SWS `root` setting so preview config stays aligned with the build output location.
+
+## Documentation
+
+- The top-level README stays brief and focuses on operator-facing usage: what `sbl` builds, required inputs, CLI flags, and the normal validate/build/serve workflow.

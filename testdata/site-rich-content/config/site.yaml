@@ -1,0 +1,8 @@
+title: "Rich Fixture Blog"
+base_url: "https://rich.example.test"
+description: "A fixture site with code, diagrams, and math."
+language: "en"
+author: "Fixture Author"
+navigation:
+  - label: "Archive"
+    url: "/archive/"
