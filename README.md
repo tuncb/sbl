@@ -94,6 +94,8 @@ Run this once in the repo before building:
 sbl setup
 ```
 
+When KaTeX or Mermaid rendering fails, the build reports the source file path and the block index that failed.
+
 ## Usage
 
 1. Create a site folder with `config/site.yaml`, posts under `content/posts/`, and optional standalone pages under `content/pages/`.

@@ -122,3 +122,43 @@ func TestBuildRichSite(t *testing.T) {
 		t.Fatalf("diagram SVG missing svg root: %s", diagramContent)
 	}
 }
+
+func TestBuildReportsMathFileAndBlockContext(t *testing.T) {
+	root := testutil.CopyFixture(t, "site-invalid-math")
+
+	err := app.Build(app.BuildOptions{
+		SiteRoot: root,
+		Clean:    true,
+	})
+	if err == nil {
+		t.Fatal("expected build error")
+	}
+
+	message := err.Error()
+	if !strings.Contains(message, filepath.Join("content", "posts", "bad-math", "index.md")) {
+		t.Fatalf("expected source path in error, got: %s", message)
+	}
+	if !strings.Contains(message, "inline math block 1") {
+		t.Fatalf("expected math block context in error, got: %s", message)
+	}
+}
+
+func TestBuildReportsMermaidFileAndBlockContext(t *testing.T) {
+	root := testutil.CopyFixture(t, "site-invalid-mermaid")
+
+	err := app.Build(app.BuildOptions{
+		SiteRoot: root,
+		Clean:    true,
+	})
+	if err == nil {
+		t.Fatal("expected build error")
+	}
+
+	message := err.Error()
+	if !strings.Contains(message, filepath.Join("content", "posts", "bad-diagram", "index.md")) {
+		t.Fatalf("expected source path in error, got: %s", message)
+	}
+	if !strings.Contains(message, "Mermaid block 1") {
+		t.Fatalf("expected Mermaid block context in error, got: %s", message)
+	}
+}

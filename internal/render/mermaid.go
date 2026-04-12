@@ -88,8 +88,14 @@ func InjectMermaid(section, slug, htmlFragment string, blocks []MermaidBlock) (s
 	}
 	generated := make([]assets.File, 0, len(blocks))
 	for _, block := range blocks {
-		svg := svgs[block.Placeholder]
-		file := assets.NewHashedFile(path.Join(section, slug, fmt.Sprintf("diagram-%d.svg", block.Index)), svg)
+		result, exists := svgs[block.Placeholder]
+		if !exists {
+			return "", nil, fmt.Errorf("missing Mermaid result for block %d", block.Index)
+		}
+		if result.Error != "" {
+			return "", nil, fmt.Errorf("Mermaid block %d: %s", block.Index, result.Error)
+		}
+		file := assets.NewHashedFile(path.Join(section, slug, fmt.Sprintf("diagram-%d.svg", block.Index)), []byte(result.SVG))
 		generated = append(generated, file)
 		replacement := fmt.Sprintf(`<figure class="diagram"><img src="%s" alt="Diagram %d"></figure>`, html.EscapeString(file.URL), block.Index)
 		var replaced bool

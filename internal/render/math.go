@@ -106,8 +106,15 @@ func ReplaceDisplayMathPlaceholders(htmlFragment string, blocks []DisplayMathBlo
 		return "", err
 	}
 	for _, block := range blocks {
+		result, exists := rendered[block.Placeholder]
+		if !exists {
+			return "", fmt.Errorf("missing display math result for block %d", block.Index)
+		}
+		if result.Error != "" {
+			return "", fmt.Errorf("display math block %d: %s", block.Index, result.Error)
+		}
 		var replaced bool
-		htmlFragment, replaced = replaceParagraphPlaceholder(htmlFragment, block.Placeholder, rendered[block.Placeholder])
+		htmlFragment, replaced = replaceParagraphPlaceholder(htmlFragment, block.Placeholder, result.HTML)
 		if !replaced {
 			return "", fmt.Errorf("missing display math placeholder %q in rendered HTML", block.Placeholder)
 		}
@@ -166,10 +173,17 @@ func ReplaceInlineMathPlaceholders(htmlFragment string, blocks []InlineMathBlock
 		return "", err
 	}
 	for _, block := range blocks {
+		result, exists := rendered[block.Placeholder]
+		if !exists {
+			return "", fmt.Errorf("missing inline math result for block %d", block.Index)
+		}
+		if result.Error != "" {
+			return "", fmt.Errorf("inline math block %d: %s", block.Index, result.Error)
+		}
 		if !strings.Contains(htmlFragment, block.Placeholder) {
 			return "", fmt.Errorf("missing inline math placeholder %q in rendered HTML", block.Placeholder)
 		}
-		htmlFragment = strings.ReplaceAll(htmlFragment, block.Placeholder, rendered[block.Placeholder])
+		htmlFragment = strings.ReplaceAll(htmlFragment, block.Placeholder, result.HTML)
 	}
 	return htmlFragment, nil
 }

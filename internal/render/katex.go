@@ -14,8 +14,9 @@ type katexJob struct {
 }
 
 type katexResult struct {
-	ID   string `json:"id"`
-	HTML string `json:"html"`
+	ID    string `json:"id"`
+	HTML  string `json:"html"`
+	Error string `json:"error"`
 }
 
 const katexEvalScript = `
@@ -23,21 +24,30 @@ import katex from 'katex';
 import { readFileSync } from 'node:fs';
 
 const input = JSON.parse(readFileSync(0, 'utf8'));
-const output = input.map((item) => ({
-  id: item.id,
-  html: katex.renderToString(item.expression, {
-    displayMode: item.displayMode,
-    throwOnError: true,
-    output: 'htmlAndMathml',
-    strict: 'error'
-  })
-}));
+const output = input.map((item) => {
+  try {
+    return {
+      id: item.id,
+      html: katex.renderToString(item.expression, {
+        displayMode: item.displayMode,
+        throwOnError: true,
+        output: 'htmlAndMathml',
+        strict: 'error'
+      })
+    };
+  } catch (error) {
+    return {
+      id: item.id,
+      error: error instanceof Error ? error.message : String(error)
+    };
+  }
+});
 process.stdout.write(JSON.stringify(output));
 `
 
-func renderKaTeX(jobs []katexJob) (map[string]string, error) {
+func renderKaTeX(jobs []katexJob) (map[string]katexResult, error) {
 	if len(jobs) == 0 {
-		return map[string]string{}, nil
+		return map[string]katexResult{}, nil
 	}
 
 	payload, err := json.Marshal(jobs)
@@ -61,9 +71,9 @@ func renderKaTeX(jobs []katexJob) (map[string]string, error) {
 		return nil, fmt.Errorf("decode KaTeX output: %w", err)
 	}
 
-	out := make(map[string]string, len(results))
+	out := make(map[string]katexResult, len(results))
 	for _, result := range results {
-		out[result.ID] = result.HTML
+		out[result.ID] = result
 	}
 	return out, nil
 }

@@ -56,3 +56,7 @@
 
 - The CLI now includes `sbl setup` to bootstrap Node dependencies and the Playwright Chromium browser in the repo root.
 - `sbl setup` supports partial runs with `--skip-npm` and `--skip-browser` so CI or local environments can reuse cached prerequisites.
+
+## Renderer Errors
+
+- KaTeX and Mermaid failures now report both the source file path and the specific block index, so authors can find invalid content without guessing which page failed.

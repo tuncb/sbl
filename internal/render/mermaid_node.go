@@ -14,8 +14,9 @@ type mermaidJob struct {
 }
 
 type mermaidResult struct {
-	ID  string `json:"id"`
-	SVG string `json:"svg"`
+	ID    string `json:"id"`
+	SVG   string `json:"svg"`
+	Error string `json:"error"`
 }
 
 const mermaidEvalScript = `
@@ -36,7 +37,10 @@ const rendered = await renderer(
 
 const output = rendered.map((item, index) => {
   if (item.status !== 'fulfilled') {
-    throw item.reason instanceof Error ? item.reason : new Error(String(item.reason));
+    return {
+      id: input[index].id,
+      error: item.reason instanceof Error ? item.reason.message : String(item.reason)
+    };
   }
   return {
     id: input[index].id,
@@ -47,7 +51,7 @@ const output = rendered.map((item, index) => {
 process.stdout.write(JSON.stringify(output));
 `
 
-func renderMermaidDiagrams(blocks []MermaidBlock) (map[string][]byte, error) {
+func renderMermaidDiagrams(blocks []MermaidBlock) (map[string]mermaidResult, error) {
 	jobs := make([]mermaidJob, 0, len(blocks))
 	for _, block := range blocks {
 		if strings.TrimSpace(block.Source) == "" {
@@ -80,9 +84,9 @@ func renderMermaidDiagrams(blocks []MermaidBlock) (map[string][]byte, error) {
 		return nil, fmt.Errorf("decode Mermaid output: %w", err)
 	}
 
-	out := make(map[string][]byte, len(results))
+	out := make(map[string]mermaidResult, len(results))
 	for _, result := range results {
-		out[result.ID] = []byte(result.SVG)
+		out[result.ID] = result
 	}
 	return out, nil
 }
