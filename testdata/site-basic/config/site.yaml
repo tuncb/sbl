@@ -6,3 +6,5 @@ author: "Fixture Author"
 navigation:
   - label: "Archive"
     url: "/archive/"
+  - label: "About"
+    url: "/pages/about/"

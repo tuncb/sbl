@@ -54,6 +54,17 @@ type PostPageData struct {
 	Post PostView
 }
 
+type PageView struct {
+	Title    string
+	Summary  string
+	BodyHTML template.HTML
+}
+
+type StandalonePageData struct {
+	BasePageData
+	Page PageView
+}
+
 func NewTemplateEngine(siteRoot string) (*Engine, error) {
 	files := map[string]string{}
 	if err := loadTemplateFS(embedded.Templates, files); err != nil {
@@ -167,6 +178,23 @@ func RenderPostPage(engine *Engine, cfg site.Config, stylesheetURL string, post 
 	return htmlPage, MakePostSummary(post), nil
 }
 
+func RenderStandalonePage(engine *Engine, cfg site.Config, stylesheetURL string, page *content.Page, bodyHTML template.HTML) ([]byte, error) {
+	return engine.Execute("page.html", StandalonePageData{
+		BasePageData: BasePageData{
+			Site:          cfg,
+			Title:         page.Title + " | " + cfg.Title,
+			Description:   pickPageDescription(page),
+			CanonicalURL:  cfg.CanonicalURL(page.CanonicalPath),
+			StylesheetURL: stylesheetURL,
+		},
+		Page: PageView{
+			Title:    page.Title,
+			Summary:  page.Summary,
+			BodyHTML: bodyHTML,
+		},
+	})
+}
+
 func RenderNotFoundPage(engine *Engine, cfg site.Config, stylesheetURL string) ([]byte, error) {
 	return engine.Execute("404.html", BasePageData{
 		Site:          cfg,
@@ -235,6 +263,13 @@ func pickDescription(post *content.Post) string {
 		return post.Description
 	}
 	return post.Summary
+}
+
+func pickPageDescription(page *content.Page) string {
+	if strings.TrimSpace(page.Description) != "" {
+		return page.Description
+	}
+	return page.Summary
 }
 
 func formatOptionalDate(value *time.Time) string {

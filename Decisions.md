@@ -41,3 +41,10 @@
 ## Documentation
 
 - The top-level README stays brief and focuses on operator-facing usage: what `sbl` builds, required inputs, CLI flags, and the normal validate/build/serve workflow.
+
+## Next Pass
+
+- Standalone pages under `content/pages/<slug>/index.md` are now part of the supported site contract.
+- Pages share the Markdown, Mermaid, math, and asset pipeline with posts, but they are excluded from the homepage post list, archive, and RSS feed.
+- Pages require `title`; `summary` is optional and is used as page lead text when present.
+- Page-local assets are fingerprinted under `/assets/pages/<slug>/...`.

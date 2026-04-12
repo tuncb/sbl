@@ -1,0 +1,14 @@
+{{ define "page" }}{{ template "base" . }}{{ end }}
+
+{{ define "body" -}}
+<article class="post">
+  <header class="post-header">
+    <p class="eyebrow">Page</p>
+    <h1>{{ .Page.Title }}</h1>
+    {{- if .Page.Summary }}
+    <p class="lead">{{ .Page.Summary }}</p>
+    {{- end }}
+  </header>
+  <div class="article-body">{{ .Page.BodyHTML }}</div>
+</article>
+{{- end }}

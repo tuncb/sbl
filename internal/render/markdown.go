@@ -34,7 +34,15 @@ var markdownEngine = goldmark.New(
 )
 
 func RenderPostBody(post *content.Post, localAssetURLs map[string]string) (template.HTML, []assets.File, int, error) {
-	markdownInput, mermaidBlocks, err := ExtractMermaid(post.MarkdownBody)
+	return renderDocumentBody("posts", post.Slug, post.MarkdownBody, localAssetURLs)
+}
+
+func RenderPageBody(page *content.Page, localAssetURLs map[string]string) (template.HTML, []assets.File, int, error) {
+	return renderDocumentBody("pages", page.Slug, page.MarkdownBody, localAssetURLs)
+}
+
+func renderDocumentBody(section, slug, markdown string, localAssetURLs map[string]string) (template.HTML, []assets.File, int, error) {
+	markdownInput, mermaidBlocks, err := ExtractMermaid(markdown)
 	if err != nil {
 		return "", nil, 0, err
 	}
@@ -65,7 +73,7 @@ func RenderPostBody(post *content.Post, localAssetURLs map[string]string) (templ
 		return "", nil, 0, err
 	}
 
-	htmlFragment, generatedFiles, err := InjectMermaid(post.Slug, htmlFragment, mermaidBlocks)
+	htmlFragment, generatedFiles, err := InjectMermaid(section, slug, htmlFragment, mermaidBlocks)
 	if err != nil {
 		return "", nil, 0, err
 	}
@@ -75,7 +83,7 @@ func RenderPostBody(post *content.Post, localAssetURLs map[string]string) (templ
 		return "", nil, 0, err
 	}
 
-	return template.HTML(htmlFragment), generatedFiles, estimateReadingTime(post.MarkdownBody), nil
+	return template.HTML(htmlFragment), generatedFiles, estimateReadingTime(markdown), nil
 }
 
 func estimateReadingTime(markdown string) int {

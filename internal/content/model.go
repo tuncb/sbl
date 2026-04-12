@@ -22,9 +22,24 @@ type Post struct {
 	CanonicalPath string
 }
 
+type Page struct {
+	Slug          string
+	SourceDir     string
+	SourcePath    string
+	Title         string
+	Summary       string
+	Draft         bool
+	Aliases       []string
+	Description   string
+	Image         string
+	MarkdownBody  string
+	CanonicalPath string
+}
+
 type Site struct {
 	Posts     []*Post
-	Canonical map[string]*Post
+	Pages     []*Page
+	Canonical map[string]string
 	Aliases   map[string]string
 }
 

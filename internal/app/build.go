@@ -50,7 +50,11 @@ func Build(opts BuildOptions) error {
 	if err != nil {
 		return err
 	}
-	graph, err := content.Validate(posts, opts.IncludeDrafts)
+	pages, err := content.LoadPages(siteRoot)
+	if err != nil {
+		return err
+	}
+	graph, err := content.Validate(posts, pages, opts.IncludeDrafts)
 	if err != nil {
 		return err
 	}
@@ -102,6 +106,36 @@ func Build(opts BuildOptions) error {
 		}
 	}
 
+	for _, page := range graph.Pages {
+		pageAssetFiles, pageAssetURLs, err := assets.BuildPageAssets(page)
+		if err != nil {
+			return err
+		}
+		for _, file := range pageAssetFiles {
+			if err := output.WriteFile(outputDir, file.RelPath, file.Bytes); err != nil {
+				return err
+			}
+		}
+
+		bodyHTML, generatedFiles, _, err := render.RenderPageBody(page, pageAssetURLs)
+		if err != nil {
+			return fmt.Errorf("render page %s: %w", page.Slug, err)
+		}
+		for _, file := range generatedFiles {
+			if err := output.WriteFile(outputDir, file.RelPath, file.Bytes); err != nil {
+				return err
+			}
+		}
+
+		pageHTML, err := render.RenderStandalonePage(engine, cfg, stylesheetURL, page, bodyHTML)
+		if err != nil {
+			return err
+		}
+		if err := output.WriteFile(outputDir, filepath.ToSlash(filepath.Join("pages", page.Slug, "index.html")), pageHTML); err != nil {
+			return err
+		}
+	}
+
 	indexHTML, err := render.RenderIndexPage(engine, cfg, stylesheetURL, postSummaries)
 	if err != nil {
 		return err
@@ -142,7 +176,7 @@ func Build(opts BuildOptions) error {
 		return err
 	}
 
-	sitemapXML, err := output.BuildSitemap(cfg, graph.Posts)
+	sitemapXML, err := output.BuildSitemap(cfg, graph.Posts, graph.Pages)
 	if err != nil {
 		return err
 	}
@@ -159,7 +193,7 @@ func Build(opts BuildOptions) error {
 	}
 
 	if opts.Stdout != nil {
-		fmt.Fprintf(opts.Stdout, "built %d posts into %s\n", len(graph.Posts), outputDir)
+		fmt.Fprintf(opts.Stdout, "built %d posts and %d pages into %s\n", len(graph.Posts), len(graph.Pages), outputDir)
 	}
 	return nil
 }

@@ -9,37 +9,45 @@ import (
 )
 
 func LoadPosts(root string) ([]*Post, error) {
-	postsDir := filepath.Join(root, "content", "posts")
-	entries, err := os.ReadDir(postsDir)
+	return loadCollection(root, "posts", parsePostFile)
+}
+
+func LoadPages(root string) ([]*Page, error) {
+	return loadCollection(root, "pages", parsePageFile)
+}
+
+func loadCollection[T any](root, section string, parse func(path, slug string) (*T, error)) ([]*T, error) {
+	contentDir := filepath.Join(root, "content", section)
+	entries, err := os.ReadDir(contentDir)
 	if errors.Is(err, os.ErrNotExist) {
 		return nil, nil
 	}
 	if err != nil {
-		return nil, fmt.Errorf("read posts directory: %w", err)
+		return nil, fmt.Errorf("read %s directory: %w", section, err)
 	}
 
 	sort.Slice(entries, func(i, j int) bool {
 		return entries[i].Name() < entries[j].Name()
 	})
 
-	posts := make([]*Post, 0, len(entries))
+	items := make([]*T, 0, len(entries))
 	for _, entry := range entries {
 		if !entry.IsDir() {
 			continue
 		}
-		indexPath := filepath.Join(postsDir, entry.Name(), "index.md")
+		indexPath := filepath.Join(contentDir, entry.Name(), "index.md")
 		if _, err := os.Stat(indexPath); errors.Is(err, os.ErrNotExist) {
 			continue
 		} else if err != nil {
 			return nil, fmt.Errorf("stat %s: %w", indexPath, err)
 		}
 
-		post, err := parsePostFile(indexPath, entry.Name())
+		item, err := parse(indexPath, entry.Name())
 		if err != nil {
 			return nil, err
 		}
-		posts = append(posts, post)
+		items = append(items, item)
 	}
 
-	return posts, nil
+	return items, nil
 }

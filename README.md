@@ -2,13 +2,14 @@
 
 `sbl` is a Go-based static blog builder.
 
-It reads a site folder, discovers Markdown posts under `content/posts/<slug>/index.md`, validates content, renders HTML, fingerprints assets, and writes a static site that can be served from `public/`.
+It reads a site folder, discovers Markdown content under `content/posts/<slug>/index.md` and `content/pages/<slug>/index.md`, validates content, renders HTML, fingerprints assets, and writes a static site that can be served from `public/`.
 
 Generated output includes:
 
 - home page
 - archive page
 - post pages
+- standalone pages
 - `404.html`
 - `50x.html`
 - `feed.xml`
@@ -57,6 +58,10 @@ Minimum expected input:
       <slug>/
         index.md
         assets/
+    pages/
+      <slug>/
+        index.md
+        assets/
 ```
 
 `site.yaml` should define at least:
@@ -68,7 +73,7 @@ base_url: "https://example.com"
 
 ## Usage
 
-1. Create a site folder with `config/site.yaml` and posts under `content/posts/`.
+1. Create a site folder with `config/site.yaml`, posts under `content/posts/`, and optional standalone pages under `content/pages/`.
 2. Run:
 
 ```text

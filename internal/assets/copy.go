@@ -51,7 +51,15 @@ func BuildStaticFiles(siteRoot string) ([]File, string, error) {
 }
 
 func BuildPostAssets(post *content.Post) ([]File, map[string]string, error) {
-	assetsDir := filepath.Join(post.SourceDir, "assets")
+	return buildScopedAssets("posts", post.Slug, post.SourceDir)
+}
+
+func BuildPageAssets(page *content.Page) ([]File, map[string]string, error) {
+	return buildScopedAssets("pages", page.Slug, page.SourceDir)
+}
+
+func buildScopedAssets(section, slug, sourceDir string) ([]File, map[string]string, error) {
+	assetsDir := filepath.Join(sourceDir, "assets")
 	if _, err := os.Stat(assetsDir); os.IsNotExist(err) {
 		return nil, map[string]string{}, nil
 	} else if err != nil {
@@ -73,7 +81,7 @@ func BuildPostAssets(post *content.Post) ([]File, map[string]string, error) {
 	urls := make(map[string]string, len(paths))
 	for _, rel := range paths {
 		data := fileMap[rel]
-		file := NewHashedFile(path.Join("posts", post.Slug, rel), data)
+		file := NewHashedFile(path.Join(section, slug, rel), data)
 		files = append(files, file)
 		urls["assets/"+rel] = file.URL
 	}

@@ -83,14 +83,14 @@ func ExtractMermaid(markdown string) (string, []MermaidBlock, error) {
 	return strings.Join(output, "\n"), blocks, nil
 }
 
-func InjectMermaid(slug, htmlFragment string, blocks []MermaidBlock) (string, []assets.File, error) {
+func InjectMermaid(section, slug, htmlFragment string, blocks []MermaidBlock) (string, []assets.File, error) {
 	generated := make([]assets.File, 0, len(blocks))
 	for _, block := range blocks {
 		svg, err := RenderMermaidSVG(block.Source)
 		if err != nil {
 			return "", nil, fmt.Errorf("render Mermaid block %d: %w", block.Index, err)
 		}
-		file := assets.NewHashedFile(path.Join("posts", slug, fmt.Sprintf("diagram-%d.svg", block.Index)), svg)
+		file := assets.NewHashedFile(path.Join(section, slug, fmt.Sprintf("diagram-%d.svg", block.Index)), svg)
 		generated = append(generated, file)
 		replacement := fmt.Sprintf(`<figure class="diagram"><img src="%s" alt="Diagram %d"></figure>`, html.EscapeString(file.URL), block.Index)
 		var replaced bool

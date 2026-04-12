@@ -25,6 +25,10 @@ func Validate(opts ValidateOptions) error {
 	if err != nil {
 		return err
 	}
-	_, err = content.Validate(posts, opts.IncludeDrafts)
+	pages, err := content.LoadPages(siteRoot)
+	if err != nil {
+		return err
+	}
+	_, err = content.Validate(posts, pages, opts.IncludeDrafts)
 	return err
 }

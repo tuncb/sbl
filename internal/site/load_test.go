@@ -21,7 +21,7 @@ func TestLoadConfigFromFixture(t *testing.T) {
 	if cfg.BaseURL != "https://example.test" {
 		t.Fatalf("unexpected base URL: %q", cfg.BaseURL)
 	}
-	if len(cfg.Navigation) != 1 || cfg.Navigation[0].URL != "/archive/" {
+	if len(cfg.Navigation) != 2 || cfg.Navigation[0].URL != "/archive/" || cfg.Navigation[1].URL != "/pages/about/" {
 		t.Fatalf("unexpected navigation: %+v", cfg.Navigation)
 	}
 }

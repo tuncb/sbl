@@ -17,13 +17,16 @@ type siteURL struct {
 	Loc string `xml:"loc"`
 }
 
-func BuildSitemap(cfg site.Config, posts []*content.Post) ([]byte, error) {
+func BuildSitemap(cfg site.Config, posts []*content.Post, pages []*content.Page) ([]byte, error) {
 	urls := []siteURL{
 		{Loc: cfg.CanonicalURL("/")},
 		{Loc: cfg.CanonicalURL("/archive/")},
 	}
 	for _, post := range posts {
 		urls = append(urls, siteURL{Loc: cfg.CanonicalURL(post.CanonicalPath)})
+	}
+	for _, page := range pages {
+		urls = append(urls, siteURL{Loc: cfg.CanonicalURL(page.CanonicalPath)})
 	}
 	payload, err := xml.MarshalIndent(urlSet{
 		Xmlns: "http://www.sitemaps.org/schemas/sitemap/0.9",

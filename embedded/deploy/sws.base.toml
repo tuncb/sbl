@@ -40,6 +40,12 @@ Cache-Control = "public, max-age=0, must-revalidate"
 Content-Security-Policy = "default-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
 
 [[advanced.headers]]
+source = "/pages/**/"
+[advanced.headers.headers]
+Cache-Control = "public, max-age=0, must-revalidate"
+Content-Security-Policy = "default-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
+
+[[advanced.headers]]
 source = "/404.html"
 [advanced.headers.headers]
 Cache-Control = "public, max-age=0, must-revalidate"
@@ -80,6 +86,11 @@ kind = 301
 [[advanced.redirects]]
 source = "/posts/{*}/index.html"
 destination = "/posts/$1/"
+kind = 301
+
+[[advanced.redirects]]
+source = "/pages/{*}/index.html"
+destination = "/pages/$1/"
 kind = 301
 
 [[advanced.redirects]]

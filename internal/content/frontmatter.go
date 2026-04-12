@@ -72,6 +72,37 @@ func parsePostFile(path, slug string) (*Post, error) {
 	}, nil
 }
 
+func parsePageFile(path, slug string) (*Page, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("read %s: %w", path, err)
+	}
+
+	fmData, body, err := splitFrontMatter(data)
+	if err != nil {
+		return nil, fmt.Errorf("parse front matter in %s: %w", path, err)
+	}
+
+	var fm frontMatter
+	if err := yaml.Unmarshal(fmData, &fm); err != nil {
+		return nil, fmt.Errorf("decode front matter in %s: %w", path, err)
+	}
+
+	return &Page{
+		Slug:          slug,
+		SourceDir:     filepath.Dir(path),
+		SourcePath:    path,
+		Title:         strings.TrimSpace(fm.Title),
+		Summary:       strings.TrimSpace(fm.Summary),
+		Draft:         fm.Draft,
+		Aliases:       fm.Aliases,
+		Description:   strings.TrimSpace(fm.Description),
+		Image:         strings.TrimSpace(fm.Image),
+		MarkdownBody:  strings.TrimSpace(body),
+		CanonicalPath: "/pages/" + slug + "/",
+	}, nil
+}
+
 func splitFrontMatter(data []byte) ([]byte, string, error) {
 	lines := bytes.Split(data, []byte("\n"))
 	if len(lines) == 0 || strings.TrimSpace(string(lines[0])) != "---" {
