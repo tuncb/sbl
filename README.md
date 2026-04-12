@@ -96,6 +96,77 @@ sbl setup
 
 When KaTeX or Mermaid rendering fails, the build reports the source file path and the block index that failed.
 
+## Quick Start
+
+1. Build the `sbl` binary:
+
+```text
+go build ./cmd/sbl
+```
+
+2. Bootstrap renderer dependencies in the repo root:
+
+```text
+./sbl setup
+```
+
+3. Create a new site folder:
+
+```text
+my-site/
+  config/
+    site.yaml
+  content/
+    posts/
+      hello-world/
+        index.md
+```
+
+4. Add `config/site.yaml`:
+
+```yaml
+title: "My Blog"
+base_url: "https://example.com"
+description: "My static site built with sbl."
+language: "en"
+navigation:
+  - label: "Archive"
+    url: "/archive/"
+```
+
+5. Add `content/posts/hello-world/index.md`:
+
+```md
+---
+title: "Hello World"
+date: 2026-04-12
+summary: "My first post."
+---
+
+## Welcome
+
+This site was built with `sbl`.
+```
+
+6. Validate and build the site:
+
+```text
+./sbl validate ./my-site
+./sbl build ./my-site --clean
+```
+
+7. The generated site will be written to:
+
+```text
+my-site/public/
+```
+
+8. Preview it with Static Web Server:
+
+```text
+static-web-server -w ./my-site/deploy/sws.toml
+```
+
 ## Usage
 
 1. Create a site folder with `config/site.yaml`, posts under `content/posts/`, and optional standalone pages under `content/pages/`.

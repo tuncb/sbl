@@ -60,3 +60,7 @@
 ## Renderer Errors
 
 - KaTeX and Mermaid failures now report both the source file path and the specific block index, so authors can find invalid content without guessing which page failed.
+
+## README Setup
+
+- The README now includes a concrete quick-start that shows the exact folders, minimal config, sample content, and the build/preview commands for creating a new site.
