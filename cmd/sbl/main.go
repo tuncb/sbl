@@ -8,6 +8,12 @@ import (
 	"sbl/internal/app"
 )
 
+var (
+	buildFn    = app.Build
+	validateFn = app.Validate
+	setupFn    = app.Setup
+)
+
 func main() {
 	os.Exit(run(os.Args[1:]))
 }
@@ -23,6 +29,8 @@ func run(args []string) int {
 		return runBuild(args[1:])
 	case "validate":
 		return runValidate(args[1:])
+	case "setup":
+		return runSetup(args[1:])
 	case "-h", "--help", "help":
 		printUsage(os.Stdout)
 		return 0
@@ -48,7 +56,7 @@ func runBuild(args []string) int {
 		return 2
 	}
 
-	if err := app.Build(app.BuildOptions{
+	if err := buildFn(app.BuildOptions{
 		SiteRoot:      flags.Arg(0),
 		OutputDir:     *outDir,
 		BaseURL:       *baseURL,
@@ -75,10 +83,35 @@ func runValidate(args []string) int {
 		return 2
 	}
 
-	if err := app.Validate(app.ValidateOptions{
+	if err := validateFn(app.ValidateOptions{
 		SiteRoot:      flags.Arg(0),
 		BaseURL:       *baseURL,
 		IncludeDrafts: *includeDrafts,
+	}); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	return 0
+}
+
+func runSetup(args []string) int {
+	flags := flag.NewFlagSet("setup", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	skipNPM := flags.Bool("skip-npm", false, "skip npm install")
+	skipBrowser := flags.Bool("skip-browser", false, "skip playwright browser install")
+	if err := flags.Parse(args); err != nil {
+		return 2
+	}
+	if flags.NArg() != 0 {
+		fmt.Fprintln(os.Stderr, "setup does not accept positional arguments")
+		return 2
+	}
+
+	if err := setupFn(app.SetupOptions{
+		SkipNPM:     *skipNPM,
+		SkipBrowser: *skipBrowser,
+		Stdout:      os.Stdout,
+		Stderr:      os.Stderr,
 	}); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
@@ -90,4 +123,5 @@ func printUsage(out *os.File) {
 	fmt.Fprintln(out, "Usage:")
 	fmt.Fprintln(out, "  sbl build <site-root> [--out <dir>] [--base-url <url>] [--include-drafts] [--clean]")
 	fmt.Fprintln(out, "  sbl validate <site-root> [--base-url <url>] [--include-drafts]")
+	fmt.Fprintln(out, "  sbl setup [--skip-npm] [--skip-browser]")
 }

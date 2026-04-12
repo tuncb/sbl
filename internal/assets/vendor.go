@@ -6,7 +6,8 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"runtime"
+
+	"sbl/internal/tooling"
 )
 
 type packageMetadata struct {
@@ -14,7 +15,7 @@ type packageMetadata struct {
 }
 
 func BuildVendorFiles() ([]File, string, error) {
-	root := moduleRoot()
+	root := tooling.ModuleRoot()
 	packageDir := filepath.Join(root, "node_modules", "katex")
 	metadata, err := readPackageMetadata(filepath.Join(packageDir, "package.json"))
 	if err != nil {
@@ -69,13 +70,4 @@ func readDirFiles(root string) (map[string][]byte, error) {
 		return nil, err
 	}
 	return files, nil
-}
-
-func moduleRoot() string {
-	return filepath.Clean(filepath.Join(filepath.Dir(currentFile()), "..", ".."))
-}
-
-func currentFile() string {
-	_, file, _, _ := runtime.Caller(0)
-	return file
 }

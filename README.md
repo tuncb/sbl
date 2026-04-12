@@ -31,6 +31,12 @@ Validate content without writing output:
 sbl validate <site-root> [--base-url <url>] [--include-drafts]
 ```
 
+Bootstrap local renderer dependencies:
+
+```text
+sbl setup [--skip-npm] [--skip-browser]
+```
+
 ## Options
 
 `build`
@@ -44,6 +50,11 @@ sbl validate <site-root> [--base-url <url>] [--include-drafts]
 
 - `--base-url <url>`: override `config/site.yaml` `base_url`
 - `--include-drafts`: include draft posts in validation
+
+`setup`
+
+- `--skip-npm`: skip `npm install`
+- `--skip-browser`: skip `npx playwright install chromium`
 
 ## Site Layout
 
@@ -80,8 +91,7 @@ Real Mermaid rendering uses Mermaid plus a local Playwright Chromium install.
 Run this once in the repo before building:
 
 ```text
-npm install
-npx playwright install chromium
+sbl setup
 ```
 
 ## Usage
