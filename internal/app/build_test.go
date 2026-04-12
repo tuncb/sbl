@@ -113,5 +113,12 @@ func TestBuildRichSite(t *testing.T) {
 	}
 
 	testutil.MustGlobOne(t, filepath.Join(root, "public", "assets", "posts", "rich-content", "layout.*.svg"))
-	testutil.MustGlobOne(t, filepath.Join(root, "public", "assets", "posts", "rich-content", "diagram-1.*.svg"))
+	diagramSVG := testutil.MustGlobOne(t, filepath.Join(root, "public", "assets", "posts", "rich-content", "diagram-1.*.svg"))
+	diagramContent := testutil.ReadFile(t, diagramSVG)
+	if strings.Contains(diagramContent, "font-family=\"monospace\"") || strings.Contains(diagramContent, "flowchart LR") {
+		t.Fatalf("diagram SVG still looks like placeholder output: %s", diagramContent)
+	}
+	if !strings.Contains(diagramContent, "<svg") {
+		t.Fatalf("diagram SVG missing svg root: %s", diagramContent)
+	}
 }

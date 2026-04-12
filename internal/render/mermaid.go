@@ -1,8 +1,6 @@
 package render
 
 import (
-	"bytes"
-	"encoding/xml"
 	"fmt"
 	"html"
 	"path"
@@ -84,12 +82,13 @@ func ExtractMermaid(markdown string) (string, []MermaidBlock, error) {
 }
 
 func InjectMermaid(section, slug, htmlFragment string, blocks []MermaidBlock) (string, []assets.File, error) {
+	svgs, err := renderMermaidDiagrams(blocks)
+	if err != nil {
+		return "", nil, err
+	}
 	generated := make([]assets.File, 0, len(blocks))
 	for _, block := range blocks {
-		svg, err := RenderMermaidSVG(block.Source)
-		if err != nil {
-			return "", nil, fmt.Errorf("render Mermaid block %d: %w", block.Index, err)
-		}
+		svg := svgs[block.Placeholder]
 		file := assets.NewHashedFile(path.Join(section, slug, fmt.Sprintf("diagram-%d.svg", block.Index)), svg)
 		generated = append(generated, file)
 		replacement := fmt.Sprintf(`<figure class="diagram"><img src="%s" alt="Diagram %d"></figure>`, html.EscapeString(file.URL), block.Index)
@@ -100,28 +99,6 @@ func InjectMermaid(section, slug, htmlFragment string, blocks []MermaidBlock) (s
 		}
 	}
 	return htmlFragment, generated, nil
-}
-
-func RenderMermaidSVG(source string) ([]byte, error) {
-	if strings.TrimSpace(source) == "" {
-		return nil, fmt.Errorf("Mermaid diagram is empty")
-	}
-	lines := strings.Split(strings.TrimSpace(source), "\n")
-	height := 72 + (len(lines) * 22)
-
-	var buffer bytes.Buffer
-	buffer.WriteString(fmt.Sprintf(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 %d" role="img" aria-label="Mermaid diagram">`, height))
-	buffer.WriteString(`<rect width="800" height="100%" fill="#fffdf8" stroke="#ddd0c2"/>`)
-	buffer.WriteString(`<text x="32" y="48" font-family="monospace" font-size="18" fill="#1e1a17">`)
-	for index, line := range lines {
-		buffer.WriteString(fmt.Sprintf(`<tspan x="32" y="%d">`, 48+(index*22)))
-		if err := xml.EscapeText(&buffer, []byte(line)); err != nil {
-			return nil, err
-		}
-		buffer.WriteString(`</tspan>`)
-	}
-	buffer.WriteString(`</text></svg>`)
-	return buffer.Bytes(), nil
 }
 
 func replaceParagraphPlaceholder(htmlFragment, placeholder, replacement string) (string, bool) {

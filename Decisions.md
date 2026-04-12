@@ -50,3 +50,4 @@
 - Page-local assets are fingerprinted under `/assets/pages/<slug>/...`.
 - Real KaTeX rendering uses the local Node toolchain plus the repo's `package.json` dependencies at build time, instead of a pure-Go math renderer.
 - KaTeX CSS and fonts are copied into `/assets/vendor/katex-<version>/...` without hashing because the versioned directory already provides stable cache-busting.
+- Real Mermaid rendering uses `mermaid-isomorphic` plus Playwright Chromium at build time, instead of the previous SVG source-text placeholder.

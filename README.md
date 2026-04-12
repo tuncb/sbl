@@ -75,10 +75,13 @@ base_url: "https://example.com"
 
 Real math rendering uses KaTeX through the local Node toolchain.
 
+Real Mermaid rendering uses Mermaid plus a local Playwright Chromium install.
+
 Run this once in the repo before building:
 
 ```text
 npm install
+npx playwright install chromium
 ```
 
 ## Usage
