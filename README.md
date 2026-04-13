@@ -177,3 +177,22 @@ Example:
 ```text
 static-web-server -w ./my-site/deploy/sws.toml
 ```
+
+## Releases
+
+CI runs on pushes to `main` and on pull requests targeting `main`.
+
+Release publishing runs when you push a tag that starts with `v`, for example:
+
+```text
+git tag v0.0.1
+git push origin v0.0.1
+```
+
+The release workflow only publishes if the tagged commit is reachable from `main`.
+
+Each release uploads one compressed archive per target platform:
+
+- Windows x64: `sbl-windows-x86_64-vX.Y.Z.zip`
+- Linux x64: `sbl-linux-x86_64-vX.Y.Z.tar.gz`
+- macOS arm64: `sbl-macos-arm64-vX.Y.Z.tar.gz`
