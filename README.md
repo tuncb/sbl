@@ -4,6 +4,8 @@
 
 It reads a site folder, discovers Markdown content under `content/posts/<slug>/index.md` and `content/pages/<slug>/index.md`, validates content, renders HTML, fingerprints assets, and writes a static site that can be served from `public/`.
 
+The shipped `sbl` binary is self-contained. Default templates, CSS, client render bootstrap, vendored KaTeX and Mermaid assets, and the base SWS config are compiled into the executable. To build a site, only the site folder itself needs to be present on disk.
+
 Generated output includes:
 
 - home page
@@ -78,6 +80,7 @@ KaTeX and Mermaid ship as self-hosted browser assets committed in the repo.
 Pages that contain math or Mermaid fences load those assets client-side from `/assets/vendor/...`.
 
 Builds do not require Node, npm, or a browser install.
+Builds do not require checked-out repo templates, static assets, or deploy defaults next to the executable.
 
 ## Quick Start
 
@@ -131,6 +134,8 @@ This site was built with `sbl`.
 ./sbl validate ./my-site
 ./sbl build ./my-site --clean
 ```
+
+Flags may appear before or after `<site-root>`.
 
 6. The generated site will be written to:
 

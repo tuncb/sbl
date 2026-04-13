@@ -5,7 +5,7 @@ import (
 	"io/fs"
 )
 
-//go:embed templates/*.html static/* deploy/* vendor
+//go:embed templates static deploy vendor
 var files embed.FS
 
 var (

@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 
 	"sbl/internal/app"
 )
@@ -45,6 +46,14 @@ func runBuild(args []string) int {
 	baseURL := flags.String("base-url", "", "site base URL override")
 	includeDrafts := flags.Bool("include-drafts", false, "include draft posts")
 	clean := flags.Bool("clean", false, "remove output directory before build")
+	args, err := normalizeArgs(args, map[string]struct{}{
+		"out":      {},
+		"base-url": {},
+	})
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 2
+	}
 	if err := flags.Parse(args); err != nil {
 		return 2
 	}
@@ -72,6 +81,13 @@ func runValidate(args []string) int {
 	flags.SetOutput(os.Stderr)
 	baseURL := flags.String("base-url", "", "site base URL override")
 	includeDrafts := flags.Bool("include-drafts", false, "include draft posts")
+	args, err := normalizeArgs(args, map[string]struct{}{
+		"base-url": {},
+	})
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 2
+	}
 	if err := flags.Parse(args); err != nil {
 		return 2
 	}
@@ -95,4 +111,50 @@ func printUsage(out *os.File) {
 	fmt.Fprintln(out, "Usage:")
 	fmt.Fprintln(out, "  sbl build <site-root> [--out <dir>] [--base-url <url>] [--include-drafts] [--clean]")
 	fmt.Fprintln(out, "  sbl validate <site-root> [--base-url <url>] [--include-drafts]")
+}
+
+func normalizeArgs(args []string, valueFlags map[string]struct{}) ([]string, error) {
+	reordered := make([]string, 0, len(args))
+	positionals := make([]string, 0, 1)
+
+	for index := 0; index < len(args); index++ {
+		arg := args[index]
+		if arg == "--" {
+			positionals = append(positionals, args[index+1:]...)
+			break
+		}
+		if !isFlagToken(arg) {
+			positionals = append(positionals, arg)
+			continue
+		}
+
+		reordered = append(reordered, arg)
+		if !flagNeedsValue(arg, valueFlags) {
+			continue
+		}
+		if index+1 >= len(args) {
+			return nil, fmt.Errorf("flag %q requires a value", arg)
+		}
+		index++
+		reordered = append(reordered, args[index])
+	}
+
+	if len(positionals) > 1 {
+		return nil, fmt.Errorf("expected exactly one site-root argument")
+	}
+
+	return append(reordered, positionals...), nil
+}
+
+func isFlagToken(arg string) bool {
+	return strings.HasPrefix(arg, "-") && arg != "-"
+}
+
+func flagNeedsValue(arg string, valueFlags map[string]struct{}) bool {
+	if strings.Contains(arg, "=") {
+		return false
+	}
+	name := strings.TrimLeft(arg, "-")
+	_, ok := valueFlags[name]
+	return ok
 }
