@@ -22,10 +22,10 @@
 
 ## Milestone 3
 
-- Mermaid rendering uses a built-in SVG renderer in v1 so builds and tests do not depend on external tools.
-- Math rendering in v1 converts supported delimiters into semantic HTML wrappers instead of requiring KaTeX at build time.
+- Mermaid rendering keeps source as safe HTML placeholders and uses self-hosted browser assets instead of a build-time renderer.
+- Math rendering converts supported delimiters into semantic HTML wrappers and lets self-hosted KaTeX enhance them in the browser.
 - Inline math is extracted before Markdown rendering because Goldmark consumes `\(` and `\)` escapes before an HTML-stage math pass can see them.
-- All cacheable assets use fingerprinted filenames, including post-local files and generated Mermaid SVGs.
+- All cacheable assets use fingerprinted filenames except versioned vendor assets under `/assets/vendor/...`.
 
 ## Milestone 4
 
@@ -48,18 +48,11 @@
 - Pages share the Markdown, Mermaid, math, and asset pipeline with posts, but they are excluded from the homepage post list, archive, and RSS feed.
 - Pages require `title`; `summary` is optional and is used as page lead text when present.
 - Page-local assets are fingerprinted under `/assets/pages/<slug>/...`.
-- Real KaTeX rendering uses the local Node toolchain plus the repo's `package.json` dependencies at build time, instead of a pure-Go math renderer.
-- KaTeX CSS and fonts are copied into `/assets/vendor/katex-<version>/...` without hashing because the versioned directory already provides stable cache-busting.
-- Real Mermaid rendering uses `mermaid-isomorphic` plus Playwright Chromium at build time, instead of the previous SVG source-text placeholder.
-
-## Setup Command
-
-- The CLI now includes `sbl setup` to bootstrap Node dependencies and the Playwright Chromium browser in the repo root.
-- `sbl setup` supports partial runs with `--skip-npm` and `--skip-browser` so CI or local environments can reuse cached prerequisites.
-
-## Renderer Errors
-
-- KaTeX and Mermaid failures now report both the source file path and the specific block index, so authors can find invalid content without guessing which page failed.
+- KaTeX and Mermaid ship as vendored browser assets committed in the repo and copied to `/assets/vendor/...` during build.
+- Mermaid fences are emitted as safe `<pre>` placeholders and rendered client-side, so builds no longer require Node or a headless browser.
+- Math blocks are emitted as semantic wrappers and rendered client-side with self-hosted KaTeX assets.
+- Inline math is still extracted before Markdown rendering because Goldmark consumes `\(` and `\)` escapes before an HTML-stage math pass can see them.
+- KaTeX CSS, fonts, and JS, plus Mermaid JS, live under versioned vendor directories without hashing because the versioned path already provides cache-busting.
 
 ## README Setup
 

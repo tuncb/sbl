@@ -13,15 +13,15 @@ import (
 	"sbl/internal/content"
 )
 
-func BuildStaticFiles(siteRoot string) ([]File, string, error) {
+func BuildStaticFiles(siteRoot string) ([]File, StaticAssets, error) {
 	files := map[string][]byte{}
 	if err := readFSFiles(embedded.Static, files); err != nil {
-		return nil, "", err
+		return nil, StaticAssets{}, err
 	}
 
 	overrideDir := filepath.Join(siteRoot, "static")
 	if err := readDiskFiles(overrideDir, files); err != nil {
-		return nil, "", err
+		return nil, StaticAssets{}, err
 	}
 
 	paths := make([]string, 0, len(files))
@@ -31,7 +31,7 @@ func BuildStaticFiles(siteRoot string) ([]File, string, error) {
 	sort.Strings(paths)
 
 	out := make([]File, 0, len(paths))
-	stylesheetURL := ""
+	assets := StaticAssets{}
 	for _, rel := range paths {
 		data := files[rel]
 		var file File
@@ -41,13 +41,16 @@ func BuildStaticFiles(siteRoot string) ([]File, string, error) {
 		} else {
 			file = NewHashedFile(rel, data)
 		}
-		if path.Base(rel) == "site.css" {
-			stylesheetURL = file.URL
+		switch path.Base(rel) {
+		case "site.css":
+			assets.StylesheetURL = file.URL
+		case "render.js":
+			assets.ClientRenderURL = file.URL
 		}
 		out = append(out, file)
 	}
 
-	return out, stylesheetURL, nil
+	return out, assets, nil
 }
 
 func BuildPostAssets(post *content.Post) ([]File, map[string]string, error) {

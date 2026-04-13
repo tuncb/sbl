@@ -2,6 +2,7 @@ package render
 
 import (
 	"fmt"
+	"html"
 	"strings"
 )
 
@@ -93,28 +94,10 @@ func ExtractDisplayMath(markdown string) (string, []DisplayMathBlock, error) {
 }
 
 func ReplaceDisplayMathPlaceholders(htmlFragment string, blocks []DisplayMathBlock) (string, error) {
-	jobs := make([]katexJob, 0, len(blocks))
 	for _, block := range blocks {
-		jobs = append(jobs, katexJob{
-			ID:          block.Placeholder,
-			Expression:  block.Source,
-			DisplayMode: true,
-		})
-	}
-	rendered, err := renderKaTeX(jobs)
-	if err != nil {
-		return "", err
-	}
-	for _, block := range blocks {
-		result, exists := rendered[block.Placeholder]
-		if !exists {
-			return "", fmt.Errorf("missing display math result for block %d", block.Index)
-		}
-		if result.Error != "" {
-			return "", fmt.Errorf("display math block %d: %s", block.Index, result.Error)
-		}
+		replacement := `<div class="sbl-math-display">` + html.EscapeString(block.Source) + `</div>`
 		var replaced bool
-		htmlFragment, replaced = replaceParagraphPlaceholder(htmlFragment, block.Placeholder, result.HTML)
+		htmlFragment, replaced = replaceParagraphPlaceholder(htmlFragment, block.Placeholder, replacement)
 		if !replaced {
 			return "", fmt.Errorf("missing display math placeholder %q in rendered HTML", block.Placeholder)
 		}
@@ -160,30 +143,12 @@ func ExtractInlineMath(markdown string) (string, []InlineMathBlock, error) {
 }
 
 func ReplaceInlineMathPlaceholders(htmlFragment string, blocks []InlineMathBlock) (string, error) {
-	jobs := make([]katexJob, 0, len(blocks))
 	for _, block := range blocks {
-		jobs = append(jobs, katexJob{
-			ID:          block.Placeholder,
-			Expression:  block.Source,
-			DisplayMode: false,
-		})
-	}
-	rendered, err := renderKaTeX(jobs)
-	if err != nil {
-		return "", err
-	}
-	for _, block := range blocks {
-		result, exists := rendered[block.Placeholder]
-		if !exists {
-			return "", fmt.Errorf("missing inline math result for block %d", block.Index)
-		}
-		if result.Error != "" {
-			return "", fmt.Errorf("inline math block %d: %s", block.Index, result.Error)
-		}
 		if !strings.Contains(htmlFragment, block.Placeholder) {
 			return "", fmt.Errorf("missing inline math placeholder %q in rendered HTML", block.Placeholder)
 		}
-		htmlFragment = strings.ReplaceAll(htmlFragment, block.Placeholder, result.HTML)
+		replacement := `<span class="sbl-math-inline">` + html.EscapeString(block.Source) + `</span>`
+		htmlFragment = strings.ReplaceAll(htmlFragment, block.Placeholder, replacement)
 	}
 	return htmlFragment, nil
 }

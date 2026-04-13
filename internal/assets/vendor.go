@@ -1,73 +1,61 @@
 package assets
 
 import (
-	"encoding/json"
 	"fmt"
-	"os"
 	"path"
-	"path/filepath"
+	"sort"
 
-	"sbl/internal/tooling"
+	"sbl/embedded"
 )
 
-type packageMetadata struct {
-	Version string `json:"version"`
+const (
+	katexVersionDir   = "katex-0.16.45"
+	mermaidVersionDir = "mermaid-11.14.0"
+)
+
+type VendorAssets struct {
+	KaTeXCSSURL  string
+	KaTeXJSURL   string
+	MermaidJSURL string
 }
 
-func BuildVendorFiles() ([]File, string, error) {
-	root := tooling.ModuleRoot()
-	packageDir := filepath.Join(root, "node_modules", "katex")
-	metadata, err := readPackageMetadata(filepath.Join(packageDir, "package.json"))
-	if err != nil {
-		return nil, "", fmt.Errorf("read katex metadata: %w", err)
+func BuildVendorFiles() ([]File, VendorAssets, error) {
+	files := map[string][]byte{}
+	if err := readFSFiles(embedded.Vendor, files); err != nil {
+		return nil, VendorAssets{}, err
 	}
 
-	baseDir := filepath.Join(packageDir, "dist")
-	cssData, err := os.ReadFile(filepath.Join(baseDir, "katex.min.css"))
-	if err != nil {
-		return nil, "", fmt.Errorf("read katex css: %w", err)
+	paths := make([]string, 0, len(files))
+	for rel := range files {
+		paths = append(paths, rel)
 	}
+	sort.Strings(paths)
 
-	targetBase := path.Join("assets", "vendor", "katex-"+metadata.Version)
-	files := []File{
-		{
-			RelPath: path.Join(targetBase, "katex.min.css"),
-			URL:     "/" + path.Join(targetBase, "katex.min.css"),
-			Bytes:   cssData,
-		},
-	}
-
-	fontFiles, err := readDirFiles(filepath.Join(baseDir, "fonts"))
-	if err != nil {
-		return nil, "", fmt.Errorf("read katex fonts: %w", err)
-	}
-	for rel, data := range fontFiles {
-		files = append(files, File{
-			RelPath: path.Join(targetBase, "fonts", rel),
-			URL:     "/" + path.Join(targetBase, "fonts", rel),
-			Bytes:   data,
+	out := make([]File, 0, len(paths))
+	for _, rel := range paths {
+		cleaned := path.Clean(rel)
+		target := path.Join("assets", "vendor", cleaned)
+		out = append(out, File{
+			RelPath: target,
+			URL:     "/" + target,
+			Bytes:   files[rel],
 		})
 	}
 
-	return files, "/" + path.Join(targetBase, "katex.min.css"), nil
-}
+	assets := VendorAssets{
+		KaTeXCSSURL:  "/" + path.Join("assets", "vendor", katexVersionDir, "katex.min.css"),
+		KaTeXJSURL:   "/" + path.Join("assets", "vendor", katexVersionDir, "katex.min.js"),
+		MermaidJSURL: "/" + path.Join("assets", "vendor", mermaidVersionDir, "mermaid.min.js"),
+	}
+	if _, ok := files[path.Join(katexVersionDir, "katex.min.css")]; !ok {
+		return nil, VendorAssets{}, fmt.Errorf("missing vendored KaTeX stylesheet")
+	}
+	if _, ok := files[path.Join(katexVersionDir, "katex.min.js")]; !ok {
+		return nil, VendorAssets{}, fmt.Errorf("missing vendored KaTeX script")
+	}
+	if _, ok := files[path.Join(mermaidVersionDir, "mermaid.min.js")]; !ok {
+		return nil, VendorAssets{}, fmt.Errorf("missing vendored Mermaid script")
+	}
 
-func readPackageMetadata(path string) (packageMetadata, error) {
-	var metadata packageMetadata
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return metadata, err
-	}
-	if err := json.Unmarshal(data, &metadata); err != nil {
-		return metadata, err
-	}
-	return metadata, nil
-}
-
-func readDirFiles(root string) (map[string][]byte, error) {
-	files := map[string][]byte{}
-	if err := readDiskFiles(root, files); err != nil {
-		return nil, err
-	}
-	return files, nil
+	return out, assets, nil
 }

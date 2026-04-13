@@ -148,25 +148,46 @@ code {
   background: var(--paper);
 }
 
-.math {
+.diagram > .sbl-mermaid {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.diagram .sbl-mermaid-rendered svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.sbl-math-inline,
+.sbl-math-display {
   background: var(--accent-soft);
   color: var(--ink);
 }
 
-.math-inline {
+.sbl-math-inline {
   display: inline-block;
   padding: 0.05rem 0.4rem;
   border-radius: 999px;
 }
 
-.math-display {
+.sbl-math-display {
   display: block;
   margin: 1rem 0;
   padding: 0.75rem 1rem;
   border-left: 4px solid var(--accent);
 }
 
-.math code {
+.sbl-math-display .katex-display {
+  margin: 0;
+}
+
+.sbl-render-error {
+  color: #8f1d1d;
+}
+
+.sbl-math-inline code,
+.sbl-math-display code {
   background: transparent;
   padding: 0;
 }

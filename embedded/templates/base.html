@@ -31,6 +31,15 @@
     <main class="shell">
       {{ template "body" . }}
     </main>
+    {{- if .ClientRender }}
+    <script
+      defer
+      src="{{ .ClientRender.BootstrapURL }}"
+      data-sbl-render="1"
+      data-katex-css-url="{{ .ClientRender.KaTeXCSSURL }}"
+      data-katex-js-url="{{ .ClientRender.KaTeXJSURL }}"
+      data-mermaid-js-url="{{ .ClientRender.MermaidJSURL }}"></script>
+    {{- end }}
   </body>
 </html>
 {{- end }}

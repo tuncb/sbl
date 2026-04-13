@@ -27,6 +27,14 @@ type BasePageData struct {
 	CanonicalURL     string
 	StylesheetURL    string
 	ExtraStylesheets []string
+	ClientRender     *ClientRenderConfig
+}
+
+type ClientRenderConfig struct {
+	BootstrapURL string
+	KaTeXCSSURL  string
+	KaTeXJSURL   string
+	MermaidJSURL string
 }
 
 type PostSummary struct {
@@ -129,7 +137,7 @@ func MakePostSummary(post *content.Post) PostSummary {
 	}
 }
 
-func RenderIndexPage(engine *Engine, cfg site.Config, stylesheetURL string, extraStylesheets []string, posts []PostSummary) ([]byte, error) {
+func RenderIndexPage(engine *Engine, cfg site.Config, stylesheetURL string, extraStylesheets []string, clientRender *ClientRenderConfig, posts []PostSummary) ([]byte, error) {
 	return engine.Execute("index.html", ListPageData{
 		BasePageData: BasePageData{
 			Site:             cfg,
@@ -138,12 +146,13 @@ func RenderIndexPage(engine *Engine, cfg site.Config, stylesheetURL string, extr
 			CanonicalURL:     cfg.CanonicalURL("/"),
 			StylesheetURL:    stylesheetURL,
 			ExtraStylesheets: extraStylesheets,
+			ClientRender:     clientRender,
 		},
 		Posts: posts,
 	})
 }
 
-func RenderArchivePage(engine *Engine, cfg site.Config, stylesheetURL string, extraStylesheets []string, posts []PostSummary) ([]byte, error) {
+func RenderArchivePage(engine *Engine, cfg site.Config, stylesheetURL string, extraStylesheets []string, clientRender *ClientRenderConfig, posts []PostSummary) ([]byte, error) {
 	return engine.Execute("archive.html", ListPageData{
 		BasePageData: BasePageData{
 			Site:             cfg,
@@ -152,12 +161,13 @@ func RenderArchivePage(engine *Engine, cfg site.Config, stylesheetURL string, ex
 			CanonicalURL:     cfg.CanonicalURL("/archive/"),
 			StylesheetURL:    stylesheetURL,
 			ExtraStylesheets: extraStylesheets,
+			ClientRender:     clientRender,
 		},
 		Posts: posts,
 	})
 }
 
-func RenderPostPage(engine *Engine, cfg site.Config, stylesheetURL string, extraStylesheets []string, post *content.Post, bodyHTML template.HTML, readingTime int) ([]byte, PostSummary, error) {
+func RenderPostPage(engine *Engine, cfg site.Config, stylesheetURL string, extraStylesheets []string, clientRender *ClientRenderConfig, post *content.Post, bodyHTML template.HTML, readingTime int) ([]byte, PostSummary, error) {
 	htmlPage, err := engine.Execute("post.html", PostPageData{
 		BasePageData: BasePageData{
 			Site:             cfg,
@@ -166,6 +176,7 @@ func RenderPostPage(engine *Engine, cfg site.Config, stylesheetURL string, extra
 			CanonicalURL:     cfg.CanonicalURL(post.CanonicalPath),
 			StylesheetURL:    stylesheetURL,
 			ExtraStylesheets: extraStylesheets,
+			ClientRender:     clientRender,
 		},
 		Post: PostView{
 			Title:       post.Title,
@@ -182,7 +193,7 @@ func RenderPostPage(engine *Engine, cfg site.Config, stylesheetURL string, extra
 	return htmlPage, MakePostSummary(post), nil
 }
 
-func RenderStandalonePage(engine *Engine, cfg site.Config, stylesheetURL string, extraStylesheets []string, page *content.Page, bodyHTML template.HTML) ([]byte, error) {
+func RenderStandalonePage(engine *Engine, cfg site.Config, stylesheetURL string, extraStylesheets []string, clientRender *ClientRenderConfig, page *content.Page, bodyHTML template.HTML) ([]byte, error) {
 	return engine.Execute("page.html", StandalonePageData{
 		BasePageData: BasePageData{
 			Site:             cfg,
@@ -191,6 +202,7 @@ func RenderStandalonePage(engine *Engine, cfg site.Config, stylesheetURL string,
 			CanonicalURL:     cfg.CanonicalURL(page.CanonicalPath),
 			StylesheetURL:    stylesheetURL,
 			ExtraStylesheets: extraStylesheets,
+			ClientRender:     clientRender,
 		},
 		Page: PageView{
 			Title:    page.Title,
@@ -200,7 +212,7 @@ func RenderStandalonePage(engine *Engine, cfg site.Config, stylesheetURL string,
 	})
 }
 
-func RenderNotFoundPage(engine *Engine, cfg site.Config, stylesheetURL string, extraStylesheets []string) ([]byte, error) {
+func RenderNotFoundPage(engine *Engine, cfg site.Config, stylesheetURL string, extraStylesheets []string, clientRender *ClientRenderConfig) ([]byte, error) {
 	return engine.Execute("404.html", BasePageData{
 		Site:             cfg,
 		Title:            "Page not found",
@@ -208,10 +220,11 @@ func RenderNotFoundPage(engine *Engine, cfg site.Config, stylesheetURL string, e
 		CanonicalURL:     cfg.CanonicalURL("/404.html"),
 		StylesheetURL:    stylesheetURL,
 		ExtraStylesheets: extraStylesheets,
+		ClientRender:     clientRender,
 	})
 }
 
-func RenderTemporaryErrorPage(engine *Engine, cfg site.Config, stylesheetURL string, extraStylesheets []string) ([]byte, error) {
+func RenderTemporaryErrorPage(engine *Engine, cfg site.Config, stylesheetURL string, extraStylesheets []string, clientRender *ClientRenderConfig) ([]byte, error) {
 	return engine.Execute("50x.html", BasePageData{
 		Site:             cfg,
 		Title:            "Temporary server problem",
@@ -219,6 +232,7 @@ func RenderTemporaryErrorPage(engine *Engine, cfg site.Config, stylesheetURL str
 		CanonicalURL:     cfg.CanonicalURL("/50x.html"),
 		StylesheetURL:    stylesheetURL,
 		ExtraStylesheets: extraStylesheets,
+		ClientRender:     clientRender,
 	})
 }
 

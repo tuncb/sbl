@@ -46,9 +46,6 @@ func TestBuildBasicSite(t *testing.T) {
 	if !strings.Contains(indexHTML, `href="/assets/site.`) {
 		t.Fatalf("index page missing hashed stylesheet: %s", indexHTML)
 	}
-	if !strings.Contains(indexHTML, `/assets/vendor/katex-`) || !strings.Contains(indexHTML, `katex.min.css`) {
-		t.Fatalf("index page missing KaTeX stylesheet: %s", indexHTML)
-	}
 	if !strings.Contains(indexHTML, "Hello World") || !strings.Contains(archiveHTML, "Hello World") {
 		t.Fatalf("list pages missing post content")
 	}
@@ -77,6 +74,7 @@ func TestBuildBasicSite(t *testing.T) {
 		t.Fatalf("generated SWS config missing pages redirect: %s", swsConfig)
 	}
 	testutil.MustGlobOne(t, filepath.Join(root, "public", "assets", "vendor", "katex-*", "katex.min.css"))
+	testutil.MustGlobOne(t, filepath.Join(root, "public", "assets", "vendor", "mermaid-*", "mermaid.min.js"))
 }
 
 func TestBuildRichSite(t *testing.T) {
@@ -93,17 +91,20 @@ func TestBuildRichSite(t *testing.T) {
 	postHTML := testutil.ReadFile(t, filepath.Join(root, "public", "posts", "rich-content", "index.html"))
 	swsConfig := testutil.ReadFile(t, filepath.Join(root, "deploy", "sws.toml"))
 
-	if !strings.Contains(postHTML, `class="katex"`) {
-		t.Fatalf("post page missing KaTeX markup: %s", postHTML)
+	if !strings.Contains(postHTML, `class="sbl-math-inline"`) || !strings.Contains(postHTML, `class="sbl-math-display"`) {
+		t.Fatalf("post page missing math placeholders: %s", postHTML)
 	}
-	if strings.Contains(postHTML, `class="math math-display"`) || strings.Contains(postHTML, `class="math math-inline"`) {
-		t.Fatalf("post page still contains placeholder math wrappers: %s", postHTML)
+	if !strings.Contains(postHTML, `class="sbl-mermaid"`) {
+		t.Fatalf("post page missing Mermaid placeholder: %s", postHTML)
+	}
+	if !strings.Contains(postHTML, `data-katex-js-url="/assets/vendor/katex-`) {
+		t.Fatalf("post page missing client render bootstrap for KaTeX: %s", postHTML)
+	}
+	if !strings.Contains(postHTML, `data-mermaid-js-url="/assets/vendor/mermaid-`) {
+		t.Fatalf("post page missing client render bootstrap for Mermaid: %s", postHTML)
 	}
 	if !strings.Contains(postHTML, `/assets/posts/rich-content/layout.`) {
 		t.Fatalf("post page missing rewritten local asset URL: %s", postHTML)
-	}
-	if !strings.Contains(postHTML, `/assets/posts/rich-content/diagram-1.`) {
-		t.Fatalf("post page missing Mermaid asset URL: %s", postHTML)
 	}
 	if !strings.Contains(postHTML, "chroma") {
 		t.Fatalf("post page missing syntax highlighted code: %s", postHTML)
@@ -113,52 +114,41 @@ func TestBuildRichSite(t *testing.T) {
 	}
 
 	testutil.MustGlobOne(t, filepath.Join(root, "public", "assets", "posts", "rich-content", "layout.*.svg"))
-	diagramSVG := testutil.MustGlobOne(t, filepath.Join(root, "public", "assets", "posts", "rich-content", "diagram-1.*.svg"))
-	diagramContent := testutil.ReadFile(t, diagramSVG)
-	if strings.Contains(diagramContent, "font-family=\"monospace\"") || strings.Contains(diagramContent, "flowchart LR") {
-		t.Fatalf("diagram SVG still looks like placeholder output: %s", diagramContent)
-	}
-	if !strings.Contains(diagramContent, "<svg") {
-		t.Fatalf("diagram SVG missing svg root: %s", diagramContent)
+	if strings.Contains(postHTML, `/assets/posts/rich-content/diagram-1.`) {
+		t.Fatalf("post page still references a pre-rendered Mermaid asset: %s", postHTML)
 	}
 }
 
-func TestBuildReportsMathFileAndBlockContext(t *testing.T) {
+func TestBuildKeepsInvalidMathForClientRender(t *testing.T) {
 	root := testutil.CopyFixture(t, "site-invalid-math")
 
 	err := app.Build(app.BuildOptions{
 		SiteRoot: root,
 		Clean:    true,
 	})
-	if err == nil {
-		t.Fatal("expected build error")
+	if err != nil {
+		t.Fatalf("Build returned error: %v", err)
 	}
 
-	message := err.Error()
-	if !strings.Contains(message, filepath.Join("content", "posts", "bad-math", "index.md")) {
-		t.Fatalf("expected source path in error, got: %s", message)
-	}
-	if !strings.Contains(message, "inline math block 1") {
-		t.Fatalf("expected math block context in error, got: %s", message)
+	postHTML := testutil.ReadFile(t, filepath.Join(root, "public", "posts", "bad-math", "index.html"))
+	if !strings.Contains(postHTML, `\badcommand{x}`) || !strings.Contains(postHTML, `class="sbl-math-inline"`) {
+		t.Fatalf("post page missing client-rendered math placeholder: %s", postHTML)
 	}
 }
 
-func TestBuildReportsMermaidFileAndBlockContext(t *testing.T) {
+func TestBuildKeepsInvalidMermaidForClientRender(t *testing.T) {
 	root := testutil.CopyFixture(t, "site-invalid-mermaid")
 
 	err := app.Build(app.BuildOptions{
 		SiteRoot: root,
 		Clean:    true,
 	})
-	if err == nil {
-		t.Fatal("expected build error")
+	if err != nil {
+		t.Fatalf("Build returned error: %v", err)
 	}
 
-	message := err.Error()
-	if !strings.Contains(message, filepath.Join("content", "posts", "bad-diagram", "index.md")) {
-		t.Fatalf("expected source path in error, got: %s", message)
-	}
-	if !strings.Contains(message, "Mermaid block 1") {
-		t.Fatalf("expected Mermaid block context in error, got: %s", message)
+	postHTML := testutil.ReadFile(t, filepath.Join(root, "public", "posts", "bad-diagram", "index.html"))
+	if !strings.Contains(postHTML, `class="sbl-mermaid"`) || !strings.Contains(postHTML, `A[Start`) {
+		t.Fatalf("post page missing client-rendered Mermaid placeholder: %s", postHTML)
 	}
 }

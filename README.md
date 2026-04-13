@@ -31,12 +31,6 @@ Validate content without writing output:
 sbl validate <site-root> [--base-url <url>] [--include-drafts]
 ```
 
-Bootstrap local renderer dependencies:
-
-```text
-sbl setup [--skip-npm] [--skip-browser]
-```
-
 ## Options
 
 `build`
@@ -50,11 +44,6 @@ sbl setup [--skip-npm] [--skip-browser]
 
 - `--base-url <url>`: override `config/site.yaml` `base_url`
 - `--include-drafts`: include draft posts in validation
-
-`setup`
-
-- `--skip-npm`: skip `npm install`
-- `--skip-browser`: skip `npx playwright install chromium`
 
 ## Site Layout
 
@@ -84,17 +73,11 @@ base_url: "https://example.com"
 
 ## Tooling
 
-Real math rendering uses KaTeX through the local Node toolchain.
+KaTeX and Mermaid ship as self-hosted browser assets committed in the repo.
 
-Real Mermaid rendering uses Mermaid plus a local Playwright Chromium install.
+Pages that contain math or Mermaid fences load those assets client-side from `/assets/vendor/...`.
 
-Run this once in the repo before building:
-
-```text
-sbl setup
-```
-
-When KaTeX or Mermaid rendering fails, the build reports the source file path and the block index that failed.
+Builds do not require Node, npm, or a browser install.
 
 ## Quick Start
 
@@ -104,13 +87,7 @@ When KaTeX or Mermaid rendering fails, the build reports the source file path an
 go build ./cmd/sbl
 ```
 
-2. Bootstrap renderer dependencies in the repo root:
-
-```text
-./sbl setup
-```
-
-3. Create a new site folder:
+2. Create a new site folder:
 
 ```text
 my-site/
@@ -122,7 +99,7 @@ my-site/
         index.md
 ```
 
-4. Add `config/site.yaml`:
+3. Add `config/site.yaml`:
 
 ```yaml
 title: "My Blog"
@@ -134,7 +111,7 @@ navigation:
     url: "/archive/"
 ```
 
-5. Add `content/posts/hello-world/index.md`:
+4. Add `content/posts/hello-world/index.md`:
 
 ```md
 ---
@@ -148,20 +125,20 @@ summary: "My first post."
 This site was built with `sbl`.
 ```
 
-6. Validate and build the site:
+5. Validate and build the site:
 
 ```text
 ./sbl validate ./my-site
 ./sbl build ./my-site --clean
 ```
 
-7. The generated site will be written to:
+6. The generated site will be written to:
 
 ```text
 my-site/public/
 ```
 
-8. Preview it with Static Web Server:
+7. Preview it with Static Web Server:
 
 ```text
 static-web-server -w ./my-site/deploy/sws.toml

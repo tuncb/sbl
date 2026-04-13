@@ -64,7 +64,7 @@ func Build(opts BuildOptions) error {
 		return err
 	}
 
-	staticFiles, stylesheetURL, err := assets.BuildStaticFiles(siteRoot)
+	staticFiles, staticAssets, err := assets.BuildStaticFiles(siteRoot)
 	if err != nil {
 		return err
 	}
@@ -74,7 +74,7 @@ func Build(opts BuildOptions) error {
 		}
 	}
 
-	vendorFiles, mathStylesheetURL, err := assets.BuildVendorFiles()
+	vendorFiles, vendorAssets, err := assets.BuildVendorFiles()
 	if err != nil {
 		return err
 	}
@@ -83,7 +83,7 @@ func Build(opts BuildOptions) error {
 			return err
 		}
 	}
-	extraStylesheets := []string{mathStylesheetURL}
+	extraStylesheets := []string{}
 
 	postSummaries := make([]render.PostSummary, 0, len(graph.Posts))
 	for _, post := range graph.Posts {
@@ -97,7 +97,7 @@ func Build(opts BuildOptions) error {
 			}
 		}
 
-		bodyHTML, generatedFiles, readingTime, err := render.RenderPostBody(post, postAssetURLs)
+		bodyHTML, generatedFiles, readingTime, features, err := render.RenderPostBody(post, postAssetURLs)
 		if err != nil {
 			return fmt.Errorf("render post %s: %w", post.Slug, err)
 		}
@@ -107,7 +107,7 @@ func Build(opts BuildOptions) error {
 			}
 		}
 
-		pageHTML, summary, err := render.RenderPostPage(engine, cfg, stylesheetURL, extraStylesheets, post, bodyHTML, readingTime)
+		pageHTML, summary, err := render.RenderPostPage(engine, cfg, staticAssets.StylesheetURL, extraStylesheets, clientRenderConfig(features, staticAssets, vendorAssets), post, bodyHTML, readingTime)
 		if err != nil {
 			return err
 		}
@@ -128,7 +128,7 @@ func Build(opts BuildOptions) error {
 			}
 		}
 
-		bodyHTML, generatedFiles, _, err := render.RenderPageBody(page, pageAssetURLs)
+		bodyHTML, generatedFiles, _, features, err := render.RenderPageBody(page, pageAssetURLs)
 		if err != nil {
 			return fmt.Errorf("render page %s: %w", page.Slug, err)
 		}
@@ -138,7 +138,7 @@ func Build(opts BuildOptions) error {
 			}
 		}
 
-		pageHTML, err := render.RenderStandalonePage(engine, cfg, stylesheetURL, extraStylesheets, page, bodyHTML)
+		pageHTML, err := render.RenderStandalonePage(engine, cfg, staticAssets.StylesheetURL, extraStylesheets, clientRenderConfig(features, staticAssets, vendorAssets), page, bodyHTML)
 		if err != nil {
 			return err
 		}
@@ -147,7 +147,7 @@ func Build(opts BuildOptions) error {
 		}
 	}
 
-	indexHTML, err := render.RenderIndexPage(engine, cfg, stylesheetURL, extraStylesheets, postSummaries)
+	indexHTML, err := render.RenderIndexPage(engine, cfg, staticAssets.StylesheetURL, extraStylesheets, nil, postSummaries)
 	if err != nil {
 		return err
 	}
@@ -155,7 +155,7 @@ func Build(opts BuildOptions) error {
 		return err
 	}
 
-	archiveHTML, err := render.RenderArchivePage(engine, cfg, stylesheetURL, extraStylesheets, postSummaries)
+	archiveHTML, err := render.RenderArchivePage(engine, cfg, staticAssets.StylesheetURL, extraStylesheets, nil, postSummaries)
 	if err != nil {
 		return err
 	}
@@ -163,7 +163,7 @@ func Build(opts BuildOptions) error {
 		return err
 	}
 
-	notFoundHTML, err := render.RenderNotFoundPage(engine, cfg, stylesheetURL, extraStylesheets)
+	notFoundHTML, err := render.RenderNotFoundPage(engine, cfg, staticAssets.StylesheetURL, extraStylesheets, nil)
 	if err != nil {
 		return err
 	}
@@ -171,7 +171,7 @@ func Build(opts BuildOptions) error {
 		return err
 	}
 
-	tempErrorHTML, err := render.RenderTemporaryErrorPage(engine, cfg, stylesheetURL, extraStylesheets)
+	tempErrorHTML, err := render.RenderTemporaryErrorPage(engine, cfg, staticAssets.StylesheetURL, extraStylesheets, nil)
 	if err != nil {
 		return err
 	}
@@ -207,4 +207,16 @@ func Build(opts BuildOptions) error {
 		fmt.Fprintf(opts.Stdout, "built %d posts and %d pages into %s\n", len(graph.Posts), len(graph.Pages), outputDir)
 	}
 	return nil
+}
+
+func clientRenderConfig(features render.Features, staticAssets assets.StaticAssets, vendorAssets assets.VendorAssets) *render.ClientRenderConfig {
+	if !features.NeedsMath && !features.NeedsMermaid {
+		return nil
+	}
+	return &render.ClientRenderConfig{
+		BootstrapURL: staticAssets.ClientRenderURL,
+		KaTeXCSSURL:  vendorAssets.KaTeXCSSURL,
+		KaTeXJSURL:   vendorAssets.KaTeXJSURL,
+		MermaidJSURL: vendorAssets.MermaidJSURL,
+	}
 }

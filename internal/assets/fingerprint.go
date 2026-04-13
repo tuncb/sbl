@@ -13,6 +13,11 @@ type File struct {
 	Bytes   []byte
 }
 
+type StaticAssets struct {
+	StylesheetURL   string
+	ClientRenderURL string
+}
+
 func FingerprintPath(rel string, data []byte) string {
 	cleaned := path.Clean(strings.TrimPrefix(rel, "/"))
 	dir, file := path.Split(cleaned)

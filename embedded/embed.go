@@ -5,13 +5,14 @@ import (
 	"io/fs"
 )
 
-//go:embed templates/*.html static/* deploy/*
+//go:embed templates/*.html static/* deploy/* vendor
 var files embed.FS
 
 var (
 	Templates = mustSub("templates")
 	Static    = mustSub("static")
 	Deploy    = mustSub("deploy")
+	Vendor    = mustSub("vendor")
 )
 
 func mustSub(dir string) fs.FS {

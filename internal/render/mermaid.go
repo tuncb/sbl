@@ -3,7 +3,6 @@ package render
 import (
 	"fmt"
 	"html"
-	"path"
 	"regexp"
 	"strings"
 
@@ -81,30 +80,16 @@ func ExtractMermaid(markdown string) (string, []MermaidBlock, error) {
 	return strings.Join(output, "\n"), blocks, nil
 }
 
-func InjectMermaid(section, slug, htmlFragment string, blocks []MermaidBlock) (string, []assets.File, error) {
-	svgs, err := renderMermaidDiagrams(blocks)
-	if err != nil {
-		return "", nil, err
-	}
-	generated := make([]assets.File, 0, len(blocks))
+func InjectMermaid(_, _ string, htmlFragment string, blocks []MermaidBlock) (string, []assets.File, error) {
 	for _, block := range blocks {
-		result, exists := svgs[block.Placeholder]
-		if !exists {
-			return "", nil, fmt.Errorf("missing Mermaid result for block %d", block.Index)
-		}
-		if result.Error != "" {
-			return "", nil, fmt.Errorf("Mermaid block %d: %s", block.Index, result.Error)
-		}
-		file := assets.NewHashedFile(path.Join(section, slug, fmt.Sprintf("diagram-%d.svg", block.Index)), []byte(result.SVG))
-		generated = append(generated, file)
-		replacement := fmt.Sprintf(`<figure class="diagram"><img src="%s" alt="Diagram %d"></figure>`, html.EscapeString(file.URL), block.Index)
+		replacement := fmt.Sprintf(`<figure class="diagram"><pre class="sbl-mermaid">%s</pre></figure>`, html.EscapeString(block.Source))
 		var replaced bool
 		htmlFragment, replaced = replaceParagraphPlaceholder(htmlFragment, block.Placeholder, replacement)
 		if !replaced {
 			return "", nil, fmt.Errorf("missing Mermaid placeholder %q in rendered HTML", block.Placeholder)
 		}
 	}
-	return htmlFragment, generated, nil
+	return htmlFragment, nil, nil
 }
 
 func replaceParagraphPlaceholder(htmlFragment, placeholder, replacement string) (string, bool) {
