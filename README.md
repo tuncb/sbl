@@ -205,8 +205,8 @@ CI runs on pushes to `main` and on pull requests targeting `main`.
 Release publishing runs when you push a tag that starts with `v`, for example:
 
 ```text
-git tag v0.0.1
-git push origin v0.0.1
+git tag v0.0.2
+git push origin v0.0.2
 ```
 
 The release workflow only publishes if the tagged commit is reachable from `main`.
