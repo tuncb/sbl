@@ -27,6 +27,12 @@ Build a site:
 sbl build <site-root> [--out <dir>] [--base-url <url>] [--include-drafts] [--clean]
 ```
 
+Watch source files and rebuild on change:
+
+```text
+sbl live <site-root> [--out <dir>] [--base-url <url>] [--include-drafts]
+```
+
 Validate content without writing output:
 
 ```text
@@ -47,6 +53,12 @@ sbl version
 - `--base-url <url>`: override `config/site.yaml` `base_url`
 - `--include-drafts`: include draft posts in validation and build output
 - `--clean`: remove the output directory before building
+
+`live`
+
+- `--out <dir>`: write output to a custom directory instead of `<site-root>/public`
+- `--base-url <url>`: override `config/site.yaml` `base_url`
+- `--include-drafts`: include draft posts in validation and build output
 
 `validate`
 
@@ -158,6 +170,14 @@ my-site/public/
 ```text
 static-web-server -w ./my-site/deploy/sws.toml
 ```
+
+8. Rebuild automatically while editing:
+
+```text
+./sbl live ./my-site
+```
+
+`live` watches `config/`, `content/`, `templates/`, `static/`, and `deploy/sws.base.toml`, then reruns the normal build when those inputs change. It does not start a preview server or auto-refresh the browser.
 
 ## Usage
 

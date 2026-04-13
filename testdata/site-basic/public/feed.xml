@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Fixture Blog</title>
+    <link>https://example.test/</link>
+    <description>A basic fixture site.</description>
+    <lastBuildDate>Mon, 13 Apr 2026 00:00:00 +0000</lastBuildDate>
+    <item>
+      <title>Hello World</title>
+      <link>https://example.test/posts/hello-world/</link>
+      <guid>https://example.test/posts/hello-world/</guid>
+      <pubDate>Mon, 13 Apr 2026 00:00:00 +0000</pubDate>
+      <description>A first post used to prove the bootstrap pipeline.</description>
+    </item>
+  </channel>
+</rss>

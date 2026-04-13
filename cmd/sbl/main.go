@@ -13,6 +13,7 @@ import (
 var (
 	version              = "0.0.1"
 	buildFn              = app.Build
+	liveFn               = app.Live
 	validateFn           = app.Validate
 	stdout     io.Writer = os.Stdout
 )
@@ -30,6 +31,8 @@ func run(args []string) int {
 	switch args[0] {
 	case "build":
 		return runBuild(args[1:])
+	case "live":
+		return runLive(args[1:])
 	case "validate":
 		return runValidate(args[1:])
 	case "version":
@@ -112,6 +115,42 @@ func runValidate(args []string) int {
 	return 0
 }
 
+func runLive(args []string) int {
+	flags := flag.NewFlagSet("live", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	outDir := flags.String("out", "", "output directory")
+	baseURL := flags.String("base-url", "", "site base URL override")
+	includeDrafts := flags.Bool("include-drafts", false, "include draft posts")
+	args, err := normalizeArgs(args, map[string]struct{}{
+		"out":      {},
+		"base-url": {},
+	})
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 2
+	}
+	if err := flags.Parse(args); err != nil {
+		return 2
+	}
+	if flags.NArg() != 1 {
+		fmt.Fprintln(os.Stderr, "live requires exactly one site-root argument")
+		return 2
+	}
+
+	if err := liveFn(app.LiveOptions{
+		SiteRoot:      flags.Arg(0),
+		OutputDir:     *outDir,
+		BaseURL:       *baseURL,
+		IncludeDrafts: *includeDrafts,
+		Stdout:        stdout,
+		Stderr:        os.Stderr,
+	}); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	return 0
+}
+
 func runVersion(args []string) int {
 	if len(args) != 0 {
 		fmt.Fprintln(os.Stderr, "version does not accept arguments")
@@ -125,6 +164,7 @@ func runVersion(args []string) int {
 func printUsage(out *os.File) {
 	fmt.Fprintln(out, "Usage:")
 	fmt.Fprintln(out, "  sbl build <site-root> [--out <dir>] [--base-url <url>] [--include-drafts] [--clean]")
+	fmt.Fprintln(out, "  sbl live <site-root> [--out <dir>] [--base-url <url>] [--include-drafts]")
 	fmt.Fprintln(out, "  sbl validate <site-root> [--base-url <url>] [--include-drafts]")
 	fmt.Fprintln(out, "  sbl version")
 }

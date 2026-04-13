@@ -47,6 +47,42 @@ func TestRunBuildAcceptsSiteRootBeforeFlags(t *testing.T) {
 	}
 }
 
+func TestRunLiveAcceptsSiteRootBeforeFlags(t *testing.T) {
+	original := liveFn
+	t.Cleanup(func() {
+		liveFn = original
+	})
+
+	var got app.LiveOptions
+	liveFn = func(opts app.LiveOptions) error {
+		got = opts
+		return nil
+	}
+
+	code := run([]string{
+		"live",
+		"./site",
+		"--out", "dist",
+		"--base-url", "https://example.com",
+		"--include-drafts",
+	})
+	if code != 0 {
+		t.Fatalf("run returned %d", code)
+	}
+	if got.SiteRoot != "./site" {
+		t.Fatalf("SiteRoot = %q, want %q", got.SiteRoot, "./site")
+	}
+	if got.OutputDir != "dist" {
+		t.Fatalf("OutputDir = %q, want %q", got.OutputDir, "dist")
+	}
+	if got.BaseURL != "https://example.com" {
+		t.Fatalf("BaseURL = %q, want %q", got.BaseURL, "https://example.com")
+	}
+	if !got.IncludeDrafts {
+		t.Fatal("IncludeDrafts = false, want true")
+	}
+}
+
 func TestRunValidateAcceptsSiteRootBeforeFlags(t *testing.T) {
 	original := validateFn
 	t.Cleanup(func() {

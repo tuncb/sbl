@@ -1,0 +1,101 @@
+[general]
+host = "0.0.0.0"
+port = 8080
+root = "./public"
+log-level = "warn"
+grace-period = 5
+cache-control-headers = false
+compression = true
+compression-level = "default"
+compression-static = false
+page404 = "./404.html"
+page50x = "./50x.html"
+security-headers = true
+directory-listing = false
+redirect-trailing-slash = true
+ignore-hidden-files = true
+disable-symlinks = true
+health = true
+accept-markdown = false
+index-files = "index.html"
+
+[advanced]
+
+[[advanced.headers]]
+source = "/"
+[advanced.headers.headers]
+Cache-Control = "public, max-age=0, must-revalidate"
+Content-Security-Policy = "default-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
+
+[[advanced.headers]]
+source = "/archive/"
+[advanced.headers.headers]
+Cache-Control = "public, max-age=0, must-revalidate"
+Content-Security-Policy = "default-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
+
+[[advanced.headers]]
+source = "/posts/**/"
+[advanced.headers.headers]
+Cache-Control = "public, max-age=0, must-revalidate"
+Content-Security-Policy = "default-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
+
+[[advanced.headers]]
+source = "/pages/**/"
+[advanced.headers.headers]
+Cache-Control = "public, max-age=0, must-revalidate"
+Content-Security-Policy = "default-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
+
+[[advanced.headers]]
+source = "/404.html"
+[advanced.headers.headers]
+Cache-Control = "public, max-age=0, must-revalidate"
+X-Robots-Tag = "noindex, nofollow"
+
+[[advanced.headers]]
+source = "/50x.html"
+[advanced.headers.headers]
+Cache-Control = "public, max-age=0, must-revalidate"
+X-Robots-Tag = "noindex, nofollow"
+
+[[advanced.headers]]
+source = "/assets/**"
+headers = { Cache-Control = "public, max-age=31536000, immutable" }
+
+[[advanced.headers]]
+source = "/feed.xml"
+headers = { Cache-Control = "public, max-age=3600, must-revalidate" }
+
+[[advanced.headers]]
+source = "/sitemap.xml"
+headers = { Cache-Control = "public, max-age=3600, must-revalidate" }
+
+[[advanced.headers]]
+source = "/robots.txt"
+headers = { Cache-Control = "public, max-age=3600, must-revalidate" }
+
+[[advanced.redirects]]
+source = "/index.html"
+destination = "/"
+kind = 301
+
+[[advanced.redirects]]
+source = "/archive/index.html"
+destination = "/archive/"
+kind = 301
+
+[[advanced.redirects]]
+source = "/posts/{*}/index.html"
+destination = "/posts/$1/"
+kind = 301
+
+[[advanced.redirects]]
+source = "/pages/{*}/index.html"
+destination = "/pages/$1/"
+kind = 301
+
+[[advanced.redirects]]
+source = "/feed"
+destination = "/feed.xml"
+kind = 301
+
+# Build-generated alias redirects belong below this line.

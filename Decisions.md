@@ -2,7 +2,7 @@
 
 ## Milestone 0
 
-- The executable is named `sbl` and starts with two subcommands: `build` and `validate`.
+- The executable is named `sbl` and currently ships `build`, `live`, and `validate` subcommands.
 - The first release is post-focused. `content/pages/` stays out of scope until the post pipeline is stable.
 - Embedded default templates, CSS, and a base SWS config ship inside the binary so a minimal site root can build without extra theme files.
 - `base_url` is required for `build` because feeds and sitemaps need canonical absolute URLs. `validate` can run without it.
