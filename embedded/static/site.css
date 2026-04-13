@@ -8,6 +8,8 @@
   --accent: #0c5c4c;
   --accent-soft: #dbece5;
   --code: #f1ece4;
+  --danger: #8f1d1d;
+  --danger-soft: #fdf0ec;
 }
 
 * {
@@ -182,8 +184,111 @@ code {
   margin: 0;
 }
 
-.sbl-render-error {
-  color: #8f1d1d;
+.sbl-render-fallback {
+  color: var(--ink);
+}
+
+.sbl-render-fallback-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0 0.15rem;
+  padding: 0.12rem 0.45rem;
+  border: 1px solid #d9b9af;
+  border-radius: 999px;
+  background: var(--danger-soft);
+  vertical-align: baseline;
+}
+
+.sbl-render-fallback-block {
+  padding: 0.95rem 1rem;
+  border: 1px solid #d9b9af;
+  border-left: 4px solid var(--danger);
+  background: linear-gradient(180deg, #fff9f7 0%, var(--danger-soft) 100%);
+}
+
+.sbl-render-fallback-header {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.sbl-render-fallback-title,
+.sbl-render-fallback-label {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.sbl-render-fallback-summary,
+.sbl-render-fallback-detail {
+  margin: 0;
+}
+
+.sbl-render-fallback-summary {
+  color: var(--ink);
+}
+
+.sbl-render-fallback-detail {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.sbl-render-fallback-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.sbl-render-action {
+  border: 1px solid #d9b9af;
+  background: #fff;
+  color: var(--danger);
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.sbl-render-action:hover {
+  background: #fff7f4;
+}
+
+.sbl-render-action:disabled {
+  opacity: 0.75;
+  cursor: default;
+}
+
+.sbl-render-fallback-details {
+  margin-top: 0.8rem;
+}
+
+.sbl-render-fallback-details > summary {
+  cursor: pointer;
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.sbl-render-fallback-source-block,
+.sbl-render-fallback-source-inline {
+  background: #fff;
+  color: var(--ink);
+}
+
+.sbl-render-fallback-source-block {
+  margin: 0.75rem 0 0;
+  padding: 0.8rem;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+}
+
+.sbl-render-fallback-source-inline {
+  padding: 0.05rem 0.3rem;
+  border-radius: 0.3rem;
+  white-space: nowrap;
+  max-width: min(42ch, 60vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sbl-math-inline code,
@@ -196,5 +301,15 @@ code {
   .site-header .shell-wide {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .sbl-render-fallback-inline {
+    display: inline-grid;
+    grid-template-columns: auto;
+    margin: 0.2rem 0;
+  }
+
+  .sbl-render-fallback-source-inline {
+    max-width: 100%;
   }
 }
