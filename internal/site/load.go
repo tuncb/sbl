@@ -12,6 +12,10 @@ import (
 )
 
 func Load(root, baseURLOverride string, requireBaseURL bool) (Config, error) {
+	if err := validateRoot(root); err != nil {
+		return Config{}, err
+	}
+
 	cfg := Config{
 		Title:       "sbl",
 		Description: "",
@@ -23,12 +27,15 @@ func Load(root, baseURLOverride string, requireBaseURL bool) (Config, error) {
 	}
 
 	configPath := filepath.Join(root, "config", "site.yaml")
-	if data, err := os.ReadFile(configPath); err == nil {
-		if err := yaml.Unmarshal(data, &cfg); err != nil {
-			return Config{}, fmt.Errorf("parse site config: %w", err)
-		}
-	} else if !errors.Is(err, os.ErrNotExist) {
+	data, err := os.ReadFile(configPath)
+	if errors.Is(err, os.ErrNotExist) {
+		return Config{}, fmt.Errorf("site config file is required: %s", configPath)
+	}
+	if err != nil {
 		return Config{}, fmt.Errorf("read site config: %w", err)
+	}
+	if err := yaml.Unmarshal(data, &cfg); err != nil {
+		return Config{}, fmt.Errorf("parse site config: %w", err)
 	}
 
 	if baseURLOverride != "" {
@@ -59,4 +66,18 @@ func Load(root, baseURLOverride string, requireBaseURL bool) (Config, error) {
 	}
 
 	return cfg, nil
+}
+
+func validateRoot(root string) error {
+	info, err := os.Stat(root)
+	if errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("site root does not exist: %s", root)
+	}
+	if err != nil {
+		return fmt.Errorf("stat site root: %w", err)
+	}
+	if !info.IsDir() {
+		return fmt.Errorf("site root is not a directory: %s", root)
+	}
+	return nil
 }

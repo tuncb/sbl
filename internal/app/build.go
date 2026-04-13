@@ -7,10 +7,8 @@ import (
 	"path/filepath"
 
 	"sbl/internal/assets"
-	"sbl/internal/content"
 	"sbl/internal/output"
 	"sbl/internal/render"
-	"sbl/internal/site"
 	"sbl/internal/sws"
 )
 
@@ -28,35 +26,20 @@ func Build(opts BuildOptions) error {
 	if err != nil {
 		return err
 	}
-	outputDir := opts.OutputDir
-	if outputDir == "" {
-		outputDir = filepath.Join(siteRoot, "public")
-	} else if !filepath.IsAbs(outputDir) {
-		outputDir = filepath.Join(siteRoot, outputDir)
+	outputDir := resolveOutputDir(siteRoot, opts.OutputDir)
+	if err := validateOutputDir(siteRoot, outputDir); err != nil {
+		return err
+	}
+
+	cfg, graph, err := loadValidatedSite(siteRoot, opts.BaseURL, true, opts.IncludeDrafts)
+	if err != nil {
+		return err
 	}
 
 	if opts.Clean {
 		if err := os.RemoveAll(outputDir); err != nil {
 			return err
 		}
-	}
-
-	cfg, err := site.Load(siteRoot, opts.BaseURL, true)
-	if err != nil {
-		return err
-	}
-
-	posts, err := content.LoadPosts(siteRoot)
-	if err != nil {
-		return err
-	}
-	pages, err := content.LoadPages(siteRoot)
-	if err != nil {
-		return err
-	}
-	graph, err := content.Validate(posts, pages, opts.IncludeDrafts)
-	if err != nil {
-		return err
 	}
 
 	engine, err := render.NewTemplateEngine(siteRoot)

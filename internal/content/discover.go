@@ -32,14 +32,24 @@ func loadCollection[T any](root, section string, parse func(path, slug string) (
 
 	items := make([]*T, 0, len(entries))
 	for _, entry := range entries {
+		entryPath := filepath.Join(contentDir, entry.Name())
 		if !entry.IsDir() {
-			continue
+			return nil, fmt.Errorf(
+				"unexpected file in %s directory: %s (expected %s)",
+				section,
+				entryPath,
+				filepath.ToSlash(filepath.Join("content", section, "<slug>", "index.md")),
+			)
 		}
-		indexPath := filepath.Join(contentDir, entry.Name(), "index.md")
-		if _, err := os.Stat(indexPath); errors.Is(err, os.ErrNotExist) {
-			continue
+		indexPath := filepath.Join(entryPath, "index.md")
+		info, err := os.Stat(indexPath)
+		if errors.Is(err, os.ErrNotExist) {
+			return nil, fmt.Errorf("missing index.md in %s directory: %s", section, entryPath)
 		} else if err != nil {
 			return nil, fmt.Errorf("stat %s: %w", indexPath, err)
+		}
+		if info.IsDir() {
+			return nil, fmt.Errorf("index.md must be a file: %s", indexPath)
 		}
 
 		item, err := parse(indexPath, entry.Name())

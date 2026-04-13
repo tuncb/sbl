@@ -2,6 +2,7 @@ package app_test
 
 import (
 	"bytes"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -14,6 +15,75 @@ func TestValidateFixtureViaApp(t *testing.T) {
 	root := testutil.CopyFixture(t, "site-basic")
 	if err := app.Validate(app.ValidateOptions{SiteRoot: root}); err != nil {
 		t.Fatalf("Validate returned error: %v", err)
+	}
+}
+
+func TestValidateRejectsMissingSiteRoot(t *testing.T) {
+	root := filepath.Join(t.TempDir(), "missing-site")
+
+	err := app.Validate(app.ValidateOptions{SiteRoot: root})
+	if err == nil || !strings.Contains(err.Error(), "site root does not exist") {
+		t.Fatalf("expected missing site root error, got: %v", err)
+	}
+}
+
+func TestBuildRejectsMissingSiteRoot(t *testing.T) {
+	root := filepath.Join(t.TempDir(), "missing-site")
+
+	err := app.Build(app.BuildOptions{
+		SiteRoot: root,
+		BaseURL:  "https://example.test",
+	})
+	if err == nil || !strings.Contains(err.Error(), "site root does not exist") {
+		t.Fatalf("expected missing site root error, got: %v", err)
+	}
+}
+
+func TestBuildDoesNotCleanOutputWhenValidationFails(t *testing.T) {
+	root := t.TempDir()
+	outputDir := filepath.Join(root, "dist")
+	sentinelPath := filepath.Join(outputDir, "keep.txt")
+
+	if err := os.MkdirAll(outputDir, 0o755); err != nil {
+		t.Fatalf("MkdirAll returned error: %v", err)
+	}
+	if err := os.WriteFile(sentinelPath, []byte("keep"), 0o644); err != nil {
+		t.Fatalf("WriteFile returned error: %v", err)
+	}
+
+	err := app.Build(app.BuildOptions{
+		SiteRoot:  root,
+		OutputDir: outputDir,
+		BaseURL:   "https://example.test",
+		Clean:     true,
+	})
+	if err == nil || !strings.Contains(err.Error(), "site config file is required") {
+		t.Fatalf("expected missing config error, got: %v", err)
+	}
+	if _, err := os.Stat(sentinelPath); err != nil {
+		t.Fatalf("expected output directory to remain untouched, stat returned: %v", err)
+	}
+}
+
+func TestValidateRejectsMisplacedPostFile(t *testing.T) {
+	root := t.TempDir()
+
+	if err := os.MkdirAll(filepath.Join(root, "config"), 0o755); err != nil {
+		t.Fatalf("MkdirAll returned error: %v", err)
+	}
+	if err := os.MkdirAll(filepath.Join(root, "content", "posts"), 0o755); err != nil {
+		t.Fatalf("MkdirAll returned error: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "config", "site.yaml"), []byte("title: Test\nbase_url: https://example.test\n"), 0o644); err != nil {
+		t.Fatalf("WriteFile returned error: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "content", "posts", "wrong-layout.md"), []byte("---\ntitle: Wrong Layout\ndate: 2026-04-13\nsummary: Misplaced file.\n---\n"), 0o644); err != nil {
+		t.Fatalf("WriteFile returned error: %v", err)
+	}
+
+	err := app.Validate(app.ValidateOptions{SiteRoot: root})
+	if err == nil || !strings.Contains(err.Error(), "unexpected file in posts directory") {
+		t.Fatalf("expected misplaced post error, got: %v", err)
 	}
 }
 

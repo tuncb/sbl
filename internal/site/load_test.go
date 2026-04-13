@@ -1,6 +1,8 @@
 package site_test
 
 import (
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"sbl/internal/site"
@@ -36,5 +38,23 @@ func TestLoadConfigOverrideBaseURL(t *testing.T) {
 
 	if cfg.BaseURL != "https://override.example.test" {
 		t.Fatalf("unexpected override base URL: %q", cfg.BaseURL)
+	}
+}
+
+func TestLoadRejectsMissingSiteRoot(t *testing.T) {
+	root := filepath.Join(t.TempDir(), "missing-site")
+
+	_, err := site.Load(root, "", false)
+	if err == nil || !strings.Contains(err.Error(), "site root does not exist") {
+		t.Fatalf("expected missing site root error, got: %v", err)
+	}
+}
+
+func TestLoadRejectsMissingConfig(t *testing.T) {
+	root := t.TempDir()
+
+	_, err := site.Load(root, "", false)
+	if err == nil || !strings.Contains(err.Error(), "site config file is required") {
+		t.Fatalf("expected missing config error, got: %v", err)
 	}
 }
