@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"testing"
 
 	"sbl/internal/app"
@@ -75,5 +76,24 @@ func TestRunValidateAcceptsSiteRootBeforeFlags(t *testing.T) {
 	}
 	if !got.IncludeDrafts {
 		t.Fatal("IncludeDrafts = false, want true")
+	}
+}
+
+func TestRunVersionPrintsVersion(t *testing.T) {
+	original := stdout
+	t.Cleanup(func() {
+		stdout = original
+	})
+
+	var got bytes.Buffer
+	stdout = &got
+
+	code := run([]string{"version"})
+	if code != 0 {
+		t.Fatalf("run returned %d", code)
+	}
+
+	if got.String() != version+"\n" {
+		t.Fatalf("stdout = %q, want %q", got.String(), version+"\n")
 	}
 }

@@ -33,6 +33,12 @@ Validate content without writing output:
 sbl validate <site-root> [--base-url <url>] [--include-drafts]
 ```
 
+Print the CLI version:
+
+```text
+sbl version
+```
+
 ## Options
 
 `build`
@@ -46,6 +52,10 @@ sbl validate <site-root> [--base-url <url>] [--include-drafts]
 
 - `--base-url <url>`: override `config/site.yaml` `base_url`
 - `--include-drafts`: include draft posts in validation
+
+`version`
+
+- prints the current CLI version string
 
 ## Site Layout
 

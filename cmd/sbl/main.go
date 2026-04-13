@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -10,8 +11,10 @@ import (
 )
 
 var (
-	buildFn    = app.Build
-	validateFn = app.Validate
+	version              = "0.0.1"
+	buildFn              = app.Build
+	validateFn           = app.Validate
+	stdout     io.Writer = os.Stdout
 )
 
 func main() {
@@ -29,6 +32,8 @@ func run(args []string) int {
 		return runBuild(args[1:])
 	case "validate":
 		return runValidate(args[1:])
+	case "version":
+		return runVersion(args[1:])
 	case "-h", "--help", "help":
 		printUsage(os.Stdout)
 		return 0
@@ -68,7 +73,7 @@ func runBuild(args []string) int {
 		BaseURL:       *baseURL,
 		IncludeDrafts: *includeDrafts,
 		Clean:         *clean,
-		Stdout:        os.Stdout,
+		Stdout:        stdout,
 	}); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
@@ -107,10 +112,21 @@ func runValidate(args []string) int {
 	return 0
 }
 
+func runVersion(args []string) int {
+	if len(args) != 0 {
+		fmt.Fprintln(os.Stderr, "version does not accept arguments")
+		return 2
+	}
+
+	fmt.Fprintln(stdout, version)
+	return 0
+}
+
 func printUsage(out *os.File) {
 	fmt.Fprintln(out, "Usage:")
 	fmt.Fprintln(out, "  sbl build <site-root> [--out <dir>] [--base-url <url>] [--include-drafts] [--clean]")
 	fmt.Fprintln(out, "  sbl validate <site-root> [--base-url <url>] [--include-drafts]")
+	fmt.Fprintln(out, "  sbl version")
 }
 
 func normalizeArgs(args []string, valueFlags map[string]struct{}) ([]string, error) {
