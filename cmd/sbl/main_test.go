@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 
 	"sbl/internal/app"
@@ -26,6 +27,7 @@ func TestRunBuildAcceptsSiteRootBeforeFlags(t *testing.T) {
 		"--out", "dist",
 		"--base-url", "https://example.com",
 		"--include-drafts",
+		"--timings",
 	})
 	if code != 0 {
 		t.Fatalf("run returned %d", code)
@@ -44,6 +46,9 @@ func TestRunBuildAcceptsSiteRootBeforeFlags(t *testing.T) {
 	}
 	if !got.Clean {
 		t.Fatal("Clean = false, want true")
+	}
+	if !got.Timings {
+		t.Fatal("Timings = false, want true")
 	}
 }
 
@@ -65,6 +70,7 @@ func TestRunLiveAcceptsSiteRootBeforeFlags(t *testing.T) {
 		"--out", "dist",
 		"--base-url", "https://example.com",
 		"--include-drafts",
+		"--timings",
 	})
 	if code != 0 {
 		t.Fatalf("run returned %d", code)
@@ -80,6 +86,9 @@ func TestRunLiveAcceptsSiteRootBeforeFlags(t *testing.T) {
 	}
 	if !got.IncludeDrafts {
 		t.Fatal("IncludeDrafts = false, want true")
+	}
+	if !got.Timings {
+		t.Fatal("Timings = false, want true")
 	}
 }
 
@@ -100,6 +109,7 @@ func TestRunValidateAcceptsSiteRootBeforeFlags(t *testing.T) {
 		"./site",
 		"--base-url", "https://example.com",
 		"--include-drafts",
+		"--timings",
 	})
 	if code != 0 {
 		t.Fatalf("run returned %d", code)
@@ -112,6 +122,9 @@ func TestRunValidateAcceptsSiteRootBeforeFlags(t *testing.T) {
 	}
 	if !got.IncludeDrafts {
 		t.Fatal("IncludeDrafts = false, want true")
+	}
+	if !got.Timings {
+		t.Fatal("Timings = false, want true")
 	}
 }
 
@@ -150,5 +163,28 @@ func TestRunShortVersionFlagPrintsVersion(t *testing.T) {
 
 	if got.String() != version+"\n" {
 		t.Fatalf("stdout = %q, want %q", got.String(), version+"\n")
+	}
+}
+
+func TestRunVersionWithTimingsPrintsTimingSummary(t *testing.T) {
+	original := stdout
+	t.Cleanup(func() {
+		stdout = original
+	})
+
+	var got bytes.Buffer
+	stdout = &got
+
+	code := run([]string{"version", "--timings"})
+	if code != 0 {
+		t.Fatalf("run returned %d", code)
+	}
+
+	output := got.String()
+	if !strings.Contains(output, version+"\n") {
+		t.Fatalf("stdout = %q, want version line", output)
+	}
+	if !strings.Contains(output, "timings:\n  total: ") {
+		t.Fatalf("stdout = %q, want timing summary", output)
 	}
 }

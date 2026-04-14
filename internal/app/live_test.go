@@ -1,6 +1,7 @@
 package app_test
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"os"
@@ -93,6 +94,47 @@ func TestLiveRecoversAfterBuildFailure(t *testing.T) {
 
 	cancel()
 	waitForLiveStop(t, errCh)
+}
+
+func TestLivePrintsTimingsOnShutdown(t *testing.T) {
+	root := testutil.CopyFixture(t, "site-basic")
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	var stdout bytes.Buffer
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- app.Live(app.LiveOptions{
+			SiteRoot:     root,
+			Context:      ctx,
+			Stdout:       &stdout,
+			Stderr:       io.Discard,
+			PollInterval: 20 * time.Millisecond,
+			Debounce:     20 * time.Millisecond,
+			Timings:      true,
+		})
+	}()
+
+	waitForFileContains(t, filepath.Join(root, "public", "index.html"), "Fixture Blog")
+
+	cancel()
+	waitForLiveStop(t, errCh)
+
+	output := stdout.String()
+	for _, needle := range []string{
+		"watching ",
+		"built 1 posts and 1 pages",
+		"timings:",
+		"  initial_scan: ",
+		"  initial_build.load_site_config: ",
+		"  initial_build.render_posts: ",
+		"  initial_build.total: ",
+		"  total: ",
+	} {
+		if !strings.Contains(output, needle) {
+			t.Fatalf("live output missing %q in %q", needle, output)
+		}
+	}
 }
 
 func waitForFileContains(t *testing.T, path, needle string) {

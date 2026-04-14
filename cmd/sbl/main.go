@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"time"
 
 	"sbl/internal/app"
 )
@@ -56,6 +57,7 @@ func runBuild(args []string) int {
 	baseURL := flags.String("base-url", "", "site base URL override")
 	includeDrafts := flags.Bool("include-drafts", false, "include draft posts")
 	clean := flags.Bool("clean", false, "remove output directory before build")
+	timings := flags.Bool("timings", false, "print execution timings")
 	args, err := normalizeArgs(args, map[string]struct{}{
 		"out":      {},
 		"base-url": {},
@@ -79,6 +81,7 @@ func runBuild(args []string) int {
 		IncludeDrafts: *includeDrafts,
 		Clean:         *clean,
 		Stdout:        stdout,
+		Timings:       *timings,
 	}); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
@@ -91,6 +94,7 @@ func runValidate(args []string) int {
 	flags.SetOutput(os.Stderr)
 	baseURL := flags.String("base-url", "", "site base URL override")
 	includeDrafts := flags.Bool("include-drafts", false, "include draft posts")
+	timings := flags.Bool("timings", false, "print execution timings")
 	args, err := normalizeArgs(args, map[string]struct{}{
 		"base-url": {},
 	})
@@ -110,6 +114,8 @@ func runValidate(args []string) int {
 		SiteRoot:      flags.Arg(0),
 		BaseURL:       *baseURL,
 		IncludeDrafts: *includeDrafts,
+		Stdout:        stdout,
+		Timings:       *timings,
 	}); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
@@ -123,6 +129,7 @@ func runLive(args []string) int {
 	outDir := flags.String("out", "", "output directory")
 	baseURL := flags.String("base-url", "", "site base URL override")
 	includeDrafts := flags.Bool("include-drafts", false, "include draft posts")
+	timings := flags.Bool("timings", false, "print execution timings")
 	args, err := normalizeArgs(args, map[string]struct{}{
 		"out":      {},
 		"base-url": {},
@@ -144,6 +151,7 @@ func runLive(args []string) int {
 		OutputDir:     *outDir,
 		BaseURL:       *baseURL,
 		IncludeDrafts: *includeDrafts,
+		Timings:       *timings,
 		Stdout:        stdout,
 		Stderr:        os.Stderr,
 	}); err != nil {
@@ -154,12 +162,22 @@ func runLive(args []string) int {
 }
 
 func runVersion(args []string) int {
-	if len(args) != 0 {
+	flags := flag.NewFlagSet("version", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	timings := flags.Bool("timings", false, "print execution timings")
+	start := time.Now()
+	if err := flags.Parse(args); err != nil {
+		return 2
+	}
+	if flags.NArg() != 0 {
 		fmt.Fprintln(os.Stderr, "version does not accept arguments")
 		return 2
 	}
 
 	fmt.Fprintln(stdout, version)
+	if *timings {
+		fmt.Fprintf(stdout, "timings:\n  total: %s\n", time.Since(start).Round(time.Microsecond))
+	}
 	return 0
 }
 
@@ -167,9 +185,10 @@ func printUsage(out io.Writer) {
 	fmt.Fprintln(out, "Usage:")
 	fmt.Fprintln(out, "  sbl [--version]")
 	fmt.Fprintln(out, "  sbl [--help]")
-	fmt.Fprintln(out, "  sbl build <site-root> [--out <dir>] [--base-url <url>] [--include-drafts] [--clean]")
-	fmt.Fprintln(out, "  sbl live <site-root> [--out <dir>] [--base-url <url>] [--include-drafts]")
-	fmt.Fprintln(out, "  sbl validate <site-root> [--base-url <url>] [--include-drafts]")
+	fmt.Fprintln(out, "  sbl build <site-root> [--out <dir>] [--base-url <url>] [--include-drafts] [--clean] [--timings]")
+	fmt.Fprintln(out, "  sbl live <site-root> [--out <dir>] [--base-url <url>] [--include-drafts] [--timings]")
+	fmt.Fprintln(out, "  sbl validate <site-root> [--base-url <url>] [--include-drafts] [--timings]")
+	fmt.Fprintln(out, "  sbl version [--timings]")
 }
 
 func normalizeArgs(args []string, valueFlags map[string]struct{}) ([]string, error) {

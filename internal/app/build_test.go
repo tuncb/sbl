@@ -189,6 +189,73 @@ func TestBuildRichSite(t *testing.T) {
 	}
 }
 
+func TestBuildPrintsTimings(t *testing.T) {
+	root := testutil.CopyFixture(t, "site-basic")
+	var stdout bytes.Buffer
+
+	err := app.Build(app.BuildOptions{
+		SiteRoot: root,
+		Clean:    true,
+		Stdout:   &stdout,
+		Timings:  true,
+	})
+	if err != nil {
+		t.Fatalf("Build returned error: %v", err)
+	}
+
+	output := stdout.String()
+	for _, needle := range []string{
+		"built 1 posts and 1 pages",
+		"timings:",
+		"  load_site_config: ",
+		"  validate_layout: ",
+		"  load_posts: ",
+		"  load_pages: ",
+		"  validate_content: ",
+		"  load_templates: ",
+		"  build_static_assets: ",
+		"  build_vendor_assets: ",
+		"  render_posts: ",
+		"  render_pages: ",
+		"  render_auxiliary: ",
+		"  write_deploy_config: ",
+		"  total: ",
+	} {
+		if !strings.Contains(output, needle) {
+			t.Fatalf("build output missing %q in %q", needle, output)
+		}
+	}
+}
+
+func TestValidatePrintsTimings(t *testing.T) {
+	root := testutil.CopyFixture(t, "site-basic")
+	var stdout bytes.Buffer
+
+	err := app.Validate(app.ValidateOptions{
+		SiteRoot: root,
+		Stdout:   &stdout,
+		Timings:  true,
+	})
+	if err != nil {
+		t.Fatalf("Validate returned error: %v", err)
+	}
+
+	output := stdout.String()
+	for _, needle := range []string{
+		"timings:",
+		"  load_site_config: ",
+		"  validate_layout: ",
+		"  load_posts: ",
+		"  load_pages: ",
+		"  validate_content: ",
+		"  total: ",
+	} {
+		if !strings.Contains(output, needle) {
+			t.Fatalf("validate output missing %q in %q", needle, output)
+		}
+	}
+}
+
 func TestBuildKeepsInvalidMathForClientRender(t *testing.T) {
 	root := testutil.CopyFixture(t, "site-invalid-math")
 

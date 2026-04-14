@@ -24,25 +24,26 @@ Generated output includes:
 Build a site:
 
 ```text
-sbl build <site-root> [--out <dir>] [--base-url <url>] [--include-drafts] [--clean]
+sbl build <site-root> [--out <dir>] [--base-url <url>] [--include-drafts] [--clean] [--timings]
 ```
 
 Watch source files and rebuild on change:
 
 ```text
-sbl live <site-root> [--out <dir>] [--base-url <url>] [--include-drafts]
+sbl live <site-root> [--out <dir>] [--base-url <url>] [--include-drafts] [--timings]
 ```
 
 Validate content without writing output:
 
 ```text
-sbl validate <site-root> [--base-url <url>] [--include-drafts]
+sbl validate <site-root> [--base-url <url>] [--include-drafts] [--timings]
 ```
 
 Print the CLI version:
 
 ```text
 sbl --version
+sbl version [--timings]
 ```
 
 ## Options
@@ -57,17 +58,24 @@ Global options
 - `--base-url <url>`: override `config/site.yaml` `base_url`
 - `--include-drafts`: include draft posts in validation and build output
 - `--clean`: remove the output directory before building
+- `--timings`: print a timing breakdown after the build completes
 
 `live`
 
 - `--out <dir>`: write output to a custom directory instead of `<site-root>/public`
 - `--base-url <url>`: override `config/site.yaml` `base_url`
 - `--include-drafts`: include draft posts in validation and build output
+- `--timings`: print an aggregated timing breakdown when live mode exits
 
 `validate`
 
 - `--base-url <url>`: override `config/site.yaml` `base_url`
 - `--include-drafts`: include draft posts in validation
+- `--timings`: print a timing breakdown after validation completes
+
+`version`
+
+- `--timings`: print the total execution time for the version command
 
 ## Site Layout
 

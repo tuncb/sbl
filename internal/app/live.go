@@ -22,6 +22,7 @@ type LiveOptions struct {
 	OutputDir     string
 	BaseURL       string
 	IncludeDrafts bool
+	Timings       bool
 	Context       context.Context
 	Stdout        io.Writer
 	Stderr        io.Writer
@@ -51,7 +52,9 @@ var liveWatchTargets = []liveWatchTarget{
 	{RelPath: filepath.ToSlash(filepath.Join("deploy", "sws.base.toml"))},
 }
 
-func Live(opts LiveOptions) error {
+func Live(opts LiveOptions) (err error) {
+	totalStart := time.Now()
+
 	siteRoot, err := filepath.Abs(opts.SiteRoot)
 	if err != nil {
 		return err
@@ -83,6 +86,15 @@ func Live(opts LiveOptions) error {
 		stderr = stdout
 	}
 
+	var report *timingReport
+	if opts.Timings {
+		report = newTimingReport()
+		defer func() {
+			report.Add("total", time.Since(totalStart))
+			report.Print(stdout)
+		}()
+	}
+
 	pollInterval := opts.PollInterval
 	if pollInterval <= 0 {
 		pollInterval = defaultLivePollInterval
@@ -92,7 +104,9 @@ func Live(opts LiveOptions) error {
 		debounce = defaultLiveDebounce
 	}
 
+	scanStart := time.Now()
 	snapshot, err := scanLiveInputs(siteRoot)
+	report.Add("initial_scan", time.Since(scanStart))
 	if err != nil {
 		return err
 	}
@@ -103,8 +117,7 @@ func Live(opts LiveOptions) error {
 		OutputDir:     outputDir,
 		BaseURL:       opts.BaseURL,
 		IncludeDrafts: opts.IncludeDrafts,
-		Stdout:        stdout,
-	})
+	}, report, "initial_build.")
 
 	lastSeen := snapshot
 	var pending liveSnapshot
@@ -118,7 +131,9 @@ func Live(opts LiveOptions) error {
 		case <-ctx.Done():
 			return nil
 		case <-ticker.C:
+			scanStart := time.Now()
 			current, err := scanLiveInputs(siteRoot)
+			report.Add("scan_inputs", time.Since(scanStart))
 			if err != nil {
 				fmt.Fprintf(stderr, "live watch scan failed: %v\n", err)
 				continue
@@ -146,8 +161,7 @@ func Live(opts LiveOptions) error {
 				OutputDir:     outputDir,
 				BaseURL:       opts.BaseURL,
 				IncludeDrafts: opts.IncludeDrafts,
-				Stdout:        stdout,
-			})
+			}, report, "rebuild_build.")
 			lastSeen = pending
 			pending = nil
 			pendingSince = time.Time{}
@@ -169,10 +183,21 @@ func validateLiveSiteRoot(siteRoot string) error {
 	return nil
 }
 
-func runLiveBuild(stdout, stderr io.Writer, opts BuildOptions) {
-	if err := Build(opts); err != nil {
-		fmt.Fprintf(stderr, "live build failed: %v\n", err)
+func runLiveBuild(stdout, stderr io.Writer, opts BuildOptions, report *timingReport, prefix string) {
+	var buildReport *timingReport
+	if report != nil {
+		buildReport = newTimingReport()
 	}
+
+	result, err := buildSite(opts, buildReport)
+	if buildReport != nil {
+		report.Merge(prefix, buildReport)
+	}
+	if err != nil {
+		fmt.Fprintf(stderr, "live build failed: %v\n", err)
+		return
+	}
+	printBuildSummary(stdout, result)
 }
 
 func scanLiveInputs(siteRoot string) (liveSnapshot, error) {
