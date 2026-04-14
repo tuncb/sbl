@@ -29,6 +29,8 @@ func run(args []string) int {
 	}
 
 	switch args[0] {
+	case "-v", "--version":
+		return runVersion(args[1:])
 	case "build":
 		return runBuild(args[1:])
 	case "live":
@@ -161,12 +163,13 @@ func runVersion(args []string) int {
 	return 0
 }
 
-func printUsage(out *os.File) {
+func printUsage(out io.Writer) {
 	fmt.Fprintln(out, "Usage:")
+	fmt.Fprintln(out, "  sbl [--version]")
+	fmt.Fprintln(out, "  sbl [--help]")
 	fmt.Fprintln(out, "  sbl build <site-root> [--out <dir>] [--base-url <url>] [--include-drafts] [--clean]")
 	fmt.Fprintln(out, "  sbl live <site-root> [--out <dir>] [--base-url <url>] [--include-drafts]")
 	fmt.Fprintln(out, "  sbl validate <site-root> [--base-url <url>] [--include-drafts]")
-	fmt.Fprintln(out, "  sbl version")
 }
 
 func normalizeArgs(args []string, valueFlags map[string]struct{}) ([]string, error) {

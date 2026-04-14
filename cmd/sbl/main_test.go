@@ -115,7 +115,7 @@ func TestRunValidateAcceptsSiteRootBeforeFlags(t *testing.T) {
 	}
 }
 
-func TestRunVersionPrintsVersion(t *testing.T) {
+func TestRunVersionFlagPrintsVersion(t *testing.T) {
 	original := stdout
 	t.Cleanup(func() {
 		stdout = original
@@ -124,7 +124,26 @@ func TestRunVersionPrintsVersion(t *testing.T) {
 	var got bytes.Buffer
 	stdout = &got
 
-	code := run([]string{"version"})
+	code := run([]string{"--version"})
+	if code != 0 {
+		t.Fatalf("run returned %d", code)
+	}
+
+	if got.String() != version+"\n" {
+		t.Fatalf("stdout = %q, want %q", got.String(), version+"\n")
+	}
+}
+
+func TestRunShortVersionFlagPrintsVersion(t *testing.T) {
+	original := stdout
+	t.Cleanup(func() {
+		stdout = original
+	})
+
+	var got bytes.Buffer
+	stdout = &got
+
+	code := run([]string{"-v"})
 	if code != 0 {
 		t.Fatalf("run returned %d", code)
 	}

@@ -42,10 +42,14 @@ sbl validate <site-root> [--base-url <url>] [--include-drafts]
 Print the CLI version:
 
 ```text
-sbl version
+sbl --version
 ```
 
 ## Options
+
+Global options
+
+- `--version`, `-v`: print the current CLI version string
 
 `build`
 
@@ -64,10 +68,6 @@ sbl version
 
 - `--base-url <url>`: override `config/site.yaml` `base_url`
 - `--include-drafts`: include draft posts in validation
-
-`version`
-
-- prints the current CLI version string
 
 ## Site Layout
 
