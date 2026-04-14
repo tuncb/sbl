@@ -1,6 +1,7 @@
 package render_test
 
 import (
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -35,6 +36,9 @@ func TestRenderPostBodyLeavesCodeBlocksForClientHighlighting(t *testing.T) {
 	}
 	if !features.NeedsCodeHighlight {
 		t.Fatalf("expected code highlight feature to be enabled")
+	}
+	if !slices.Equal(features.CodeLanguages, []string{"go"}) {
+		t.Fatalf("expected tracked Prism languages, got %v", features.CodeLanguages)
 	}
 	if features.NeedsMath {
 		t.Fatalf("expected math feature to be disabled")

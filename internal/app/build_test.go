@@ -143,8 +143,12 @@ func TestBuildBasicSite(t *testing.T) {
 	if !strings.Contains(swsConfig, `source = "/pages/{*}/index.html"`) {
 		t.Fatalf("generated SWS config missing pages redirect: %s", swsConfig)
 	}
-	testutil.MustGlobOne(t, filepath.Join(root, "public", "assets", "vendor", "katex-*", "katex.min.css"))
-	testutil.MustGlobOne(t, filepath.Join(root, "public", "assets", "vendor", "mermaid-*", "mermaid.min.js"))
+	if strings.Contains(postHTML, `data-sbl-render="1"`) {
+		t.Fatalf("basic post unexpectedly bootstrapped client rendering: %s", postHTML)
+	}
+	if _, err := os.Stat(filepath.Join(root, "public", "assets", "vendor")); !os.IsNotExist(err) {
+		t.Fatalf("expected no vendored browser assets for basic site, stat returned: %v", err)
+	}
 }
 
 func TestBuildRichSite(t *testing.T) {
@@ -204,9 +208,55 @@ func TestBuildRichSite(t *testing.T) {
 	testutil.MustGlobOne(t, filepath.Join(root, "public", "assets", "vendor", "prism-*", "themes", "prism.min.css"))
 	testutil.MustGlobOne(t, filepath.Join(root, "public", "assets", "vendor", "prism-*", "components", "prism-core.min.js"))
 	testutil.MustGlobOne(t, filepath.Join(root, "public", "assets", "vendor", "prism-*", "plugins", "autoloader", "prism-autoloader.min.js"))
+	testutil.MustGlobOne(t, filepath.Join(root, "public", "assets", "vendor", "prism-*", "components", "prism-clike.min.js"))
+	testutil.MustGlobOne(t, filepath.Join(root, "public", "assets", "vendor", "prism-*", "components", "prism-go.min.js"))
+	if matches, err := filepath.Glob(filepath.Join(root, "public", "assets", "vendor", "prism-*", "components", "prism-python.min.js")); err != nil {
+		t.Fatalf("glob returned error: %v", err)
+	} else if len(matches) != 0 {
+		t.Fatalf("unexpected unused Prism component copied: %v", matches)
+	}
 	testutil.MustGlobOne(t, filepath.Join(root, "public", "assets", "posts", "rich-content", "layout.*.svg"))
 	if strings.Contains(postHTML, `/assets/posts/rich-content/diagram-1.`) {
 		t.Fatalf("post page still references a pre-rendered Mermaid asset: %s", postHTML)
+	}
+}
+
+func TestBuildPrunesUnusedVendorAssetsOnRebuild(t *testing.T) {
+	root := testutil.CopyFixture(t, "site-rich-content")
+
+	err := app.Build(app.BuildOptions{
+		SiteRoot: root,
+		Clean:    true,
+	})
+	if err != nil {
+		t.Fatalf("initial build returned error: %v", err)
+	}
+
+	markdown := `---
+title: "Rich Content"
+date: 2026-04-12
+updated: 2026-04-12
+summary: "No longer uses client-rendered browser assets."
+draft: false
+---
+
+## Plain text
+
+This rebuild should not emit KaTeX, Mermaid, or Prism assets.
+`
+	if err := os.WriteFile(filepath.Join(root, "content", "posts", "rich-content", "index.md"), []byte(markdown), 0o644); err != nil {
+		t.Fatalf("WriteFile returned error: %v", err)
+	}
+
+	err = app.Build(app.BuildOptions{
+		SiteRoot: root,
+	})
+	if err != nil {
+		t.Fatalf("rebuild returned error: %v", err)
+	}
+
+	if _, err := os.Stat(filepath.Join(root, "public", "assets", "vendor")); !os.IsNotExist(err) {
+		t.Fatalf("expected vendored browser assets to be pruned on rebuild, stat returned: %v", err)
 	}
 }
 

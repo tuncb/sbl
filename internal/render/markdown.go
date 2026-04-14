@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/yuin/goldmark"
@@ -27,10 +29,13 @@ var markdownEngine = goldmark.New(
 	),
 )
 
+var prismLanguageClassPattern = regexp.MustCompile(`\blanguage-([\w-]+)\b`)
+
 type Features struct {
 	NeedsMath          bool
 	NeedsMermaid       bool
 	NeedsCodeHighlight bool
+	CodeLanguages      []string
 }
 
 func RenderPostBody(post *content.Post, localAssetURLs map[string]string) (template.HTML, []assets.File, int, Features, error) {
@@ -63,7 +68,8 @@ func renderDocumentBody(section, slug, sourcePath, markdown string, localAssetUR
 	}
 
 	htmlFragment := buffer.String()
-	needsCodeHighlight := strings.Contains(htmlFragment, `class="language-`)
+	codeLanguages := detectCodeLanguages(htmlFragment)
+	needsCodeHighlight := len(codeLanguages) > 0
 	htmlFragment, err = ReplaceDisplayMathPlaceholders(htmlFragment, displayMathBlocks)
 	if err != nil {
 		return "", nil, 0, Features{}, fmt.Errorf("%s: %w", sourcePath, err)
@@ -88,7 +94,33 @@ func renderDocumentBody(section, slug, sourcePath, markdown string, localAssetUR
 		NeedsMath:          len(displayMathBlocks) > 0 || len(inlineMathBlocks) > 0,
 		NeedsMermaid:       len(mermaidBlocks) > 0,
 		NeedsCodeHighlight: needsCodeHighlight,
+		CodeLanguages:      codeLanguages,
 	}, nil
+}
+
+func detectCodeLanguages(htmlFragment string) []string {
+	matches := prismLanguageClassPattern.FindAllStringSubmatch(htmlFragment, -1)
+	if len(matches) == 0 {
+		return nil
+	}
+
+	languages := make(map[string]struct{}, len(matches))
+	for _, match := range matches {
+		if len(match) < 2 || match[1] == "" {
+			continue
+		}
+		languages[strings.ToLower(match[1])] = struct{}{}
+	}
+	if len(languages) == 0 {
+		return nil
+	}
+
+	out := make([]string, 0, len(languages))
+	for language := range languages {
+		out = append(out, language)
+	}
+	sort.Strings(out)
+	return out
 }
 
 func estimateReadingTime(markdown string) int {

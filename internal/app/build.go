@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"time"
 
 	"sbl/internal/assets"
@@ -27,6 +28,43 @@ type buildResult struct {
 	OutputDir string
 	PostCount int
 	PageCount int
+}
+
+type vendorUsage struct {
+	needsMath      bool
+	needsMermaid   bool
+	prismLanguages map[string]struct{}
+}
+
+func (usage *vendorUsage) add(features render.Features) {
+	if features.NeedsMath {
+		usage.needsMath = true
+	}
+	if features.NeedsMermaid {
+		usage.needsMermaid = true
+	}
+	if len(features.CodeLanguages) == 0 {
+		return
+	}
+	if usage.prismLanguages == nil {
+		usage.prismLanguages = make(map[string]struct{}, len(features.CodeLanguages))
+	}
+	for _, language := range features.CodeLanguages {
+		usage.prismLanguages[language] = struct{}{}
+	}
+}
+
+func (usage vendorUsage) request() assets.VendorRequest {
+	languages := make([]string, 0, len(usage.prismLanguages))
+	for language := range usage.prismLanguages {
+		languages = append(languages, language)
+	}
+	sort.Strings(languages)
+	return assets.VendorRequest{
+		IncludeKaTeX:   usage.needsMath,
+		IncludeMermaid: usage.needsMermaid,
+		PrismLanguages: languages,
+	}
 }
 
 func Build(opts BuildOptions) (err error) {
@@ -101,22 +139,8 @@ func buildSite(opts BuildOptions, report *timingReport) (_ buildResult, err erro
 		return buildResult{}, err
 	}
 
-	var vendorAssets assets.VendorAssets
-	if err := measureTiming(report, "build_vendor_assets", func() error {
-		vendorFiles, vendorInfo, err := assets.BuildVendorFiles()
-		if err != nil {
-			return err
-		}
-		for _, file := range vendorFiles {
-			if err := output.WriteFile(outputDir, file.RelPath, file.Bytes); err != nil {
-				return err
-			}
-		}
-		vendorAssets = vendorInfo
-		return nil
-	}); err != nil {
-		return buildResult{}, err
-	}
+	vendorAssets := assets.DefaultVendorAssets()
+	var usedVendors vendorUsage
 	postSummaries := make([]render.PostSummary, 0, len(graph.Posts))
 	if err := measureTiming(report, "render_posts", func() error {
 		for _, post := range graph.Posts {
@@ -134,6 +158,7 @@ func buildSite(opts BuildOptions, report *timingReport) (_ buildResult, err erro
 			if err != nil {
 				return fmt.Errorf("render post %s: %w", post.Slug, err)
 			}
+			usedVendors.add(features)
 			for _, file := range generatedFiles {
 				if err := output.WriteFile(outputDir, file.RelPath, file.Bytes); err != nil {
 					return err
@@ -179,6 +204,7 @@ func buildSite(opts BuildOptions, report *timingReport) (_ buildResult, err erro
 			if err != nil {
 				return fmt.Errorf("render page %s: %w", page.Slug, err)
 			}
+			usedVendors.add(features)
 			for _, file := range generatedFiles {
 				if err := output.WriteFile(outputDir, file.RelPath, file.Bytes); err != nil {
 					return err
@@ -198,6 +224,25 @@ func buildSite(opts BuildOptions, report *timingReport) (_ buildResult, err erro
 				return err
 			}
 			if err := output.WriteFile(outputDir, filepath.ToSlash(filepath.Join("pages", page.Slug, "index.html")), pageHTML); err != nil {
+				return err
+			}
+		}
+		return nil
+	}); err != nil {
+		return buildResult{}, err
+	}
+
+	if err := measureTiming(report, "build_vendor_assets", func() error {
+		vendorDir := filepath.Join(outputDir, "assets", "vendor")
+		if err := os.RemoveAll(vendorDir); err != nil {
+			return err
+		}
+		vendorFiles, _, err := assets.BuildVendorFiles(usedVendors.request())
+		if err != nil {
+			return err
+		}
+		for _, file := range vendorFiles {
+			if err := output.WriteFile(outputDir, file.RelPath, file.Bytes); err != nil {
 				return err
 			}
 		}
