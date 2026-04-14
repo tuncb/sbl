@@ -6,9 +6,7 @@ import (
 	"html/template"
 	"strings"
 
-	chromahtml "github.com/alecthomas/chroma/v2/formatters/html"
 	"github.com/yuin/goldmark"
-	highlighting "github.com/yuin/goldmark-highlighting/v2"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
 	htmlrender "github.com/yuin/goldmark/renderer/html"
@@ -20,11 +18,6 @@ import (
 var markdownEngine = goldmark.New(
 	goldmark.WithExtensions(
 		extension.GFM,
-		highlighting.NewHighlighting(
-			highlighting.WithFormatOptions(
-				chromahtml.WithClasses(true),
-			),
-		),
 	),
 	goldmark.WithParserOptions(
 		parser.WithAutoHeadingID(),
@@ -35,8 +28,9 @@ var markdownEngine = goldmark.New(
 )
 
 type Features struct {
-	NeedsMath    bool
-	NeedsMermaid bool
+	NeedsMath          bool
+	NeedsMermaid       bool
+	NeedsCodeHighlight bool
 }
 
 func RenderPostBody(post *content.Post, localAssetURLs map[string]string) (template.HTML, []assets.File, int, Features, error) {
@@ -69,6 +63,7 @@ func renderDocumentBody(section, slug, sourcePath, markdown string, localAssetUR
 	}
 
 	htmlFragment := buffer.String()
+	needsCodeHighlight := strings.Contains(htmlFragment, `class="language-`)
 	htmlFragment, err = ReplaceDisplayMathPlaceholders(htmlFragment, displayMathBlocks)
 	if err != nil {
 		return "", nil, 0, Features{}, fmt.Errorf("%s: %w", sourcePath, err)
@@ -90,8 +85,9 @@ func renderDocumentBody(section, slug, sourcePath, markdown string, localAssetUR
 	}
 
 	return template.HTML(htmlFragment), generatedFiles, estimateReadingTime(markdown), Features{
-		NeedsMath:    len(displayMathBlocks) > 0 || len(inlineMathBlocks) > 0,
-		NeedsMermaid: len(mermaidBlocks) > 0,
+		NeedsMath:          len(displayMathBlocks) > 0 || len(inlineMathBlocks) > 0,
+		NeedsMermaid:       len(mermaidBlocks) > 0,
+		NeedsCodeHighlight: needsCodeHighlight,
 	}, nil
 }
 

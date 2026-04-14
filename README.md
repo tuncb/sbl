@@ -105,9 +105,9 @@ base_url: "https://example.com"
 
 ## Tooling
 
-KaTeX and Mermaid ship as self-hosted browser assets committed in the repo.
+KaTeX, Mermaid, and Prism ship as self-hosted browser assets committed in the repo.
 
-Pages that contain math or Mermaid fences load those assets client-side from `/assets/vendor/...`.
+Pages that contain math, Mermaid fences, or fenced code blocks with a language identifier load those assets client-side from `/assets/vendor/...`.
 
 Builds do not require Node, npm, or a browser install.
 Builds do not require checked-out repo templates, static assets, or deploy defaults next to the executable.

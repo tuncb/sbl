@@ -38,7 +38,10 @@
       data-sbl-render="1"
       data-katex-css-url="{{ .ClientRender.KaTeXCSSURL }}"
       data-katex-js-url="{{ .ClientRender.KaTeXJSURL }}"
-      data-mermaid-js-url="{{ .ClientRender.MermaidJSURL }}"></script>
+      data-mermaid-js-url="{{ .ClientRender.MermaidJSURL }}"
+      data-prism-core-js-url="{{ .ClientRender.PrismCoreJSURL }}"
+      data-prism-autoloader-js-url="{{ .ClientRender.PrismAutoloaderJSURL }}"
+      data-prism-languages-path="{{ .ClientRender.PrismLanguagesPath }}"></script>
     {{- end }}
   </body>
 </html>

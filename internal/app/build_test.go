@@ -173,16 +173,37 @@ func TestBuildRichSite(t *testing.T) {
 	if !strings.Contains(postHTML, `data-mermaid-js-url="/assets/vendor/mermaid-`) {
 		t.Fatalf("post page missing client render bootstrap for Mermaid: %s", postHTML)
 	}
+	if !strings.Contains(postHTML, `href="/assets/vendor/prism-`) {
+		t.Fatalf("post page missing Prism stylesheet: %s", postHTML)
+	}
+	if !strings.Contains(postHTML, `data-prism-core-js-url="/assets/vendor/prism-`) {
+		t.Fatalf("post page missing Prism core bootstrap URL: %s", postHTML)
+	}
+	if !strings.Contains(postHTML, `data-prism-autoloader-js-url="/assets/vendor/prism-`) {
+		t.Fatalf("post page missing Prism autoloader bootstrap URL: %s", postHTML)
+	}
+	if !strings.Contains(postHTML, `data-prism-languages-path="/assets/vendor/prism-`) {
+		t.Fatalf("post page missing Prism languages path: %s", postHTML)
+	}
 	if !strings.Contains(postHTML, `/assets/posts/rich-content/layout.`) {
 		t.Fatalf("post page missing rewritten local asset URL: %s", postHTML)
 	}
-	if !strings.Contains(postHTML, "chroma") {
-		t.Fatalf("post page missing syntax highlighted code: %s", postHTML)
+	if !strings.Contains(postHTML, `class="language-go"`) {
+		t.Fatalf("post page missing client-highlightable code block: %s", postHTML)
+	}
+	if strings.Contains(postHTML, `class="chroma"`) {
+		t.Fatalf("post page still contains server-side highlighting markup: %s", postHTML)
+	}
+	if strings.Contains(postHTML, `<span class="kn">`) {
+		t.Fatalf("post page still contains server-side token markup: %s", postHTML)
 	}
 	if !strings.Contains(swsConfig, `source = "/notes/old-rich-content/"`) {
 		t.Fatalf("generated SWS config missing alias redirect: %s", swsConfig)
 	}
 
+	testutil.MustGlobOne(t, filepath.Join(root, "public", "assets", "vendor", "prism-*", "themes", "prism.min.css"))
+	testutil.MustGlobOne(t, filepath.Join(root, "public", "assets", "vendor", "prism-*", "components", "prism-core.min.js"))
+	testutil.MustGlobOne(t, filepath.Join(root, "public", "assets", "vendor", "prism-*", "plugins", "autoloader", "prism-autoloader.min.js"))
 	testutil.MustGlobOne(t, filepath.Join(root, "public", "assets", "posts", "rich-content", "layout.*.svg"))
 	if strings.Contains(postHTML, `/assets/posts/rich-content/diagram-1.`) {
 		t.Fatalf("post page still references a pre-rendered Mermaid asset: %s", postHTML)

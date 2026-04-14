@@ -31,10 +31,13 @@ type BasePageData struct {
 }
 
 type ClientRenderConfig struct {
-	BootstrapURL string
-	KaTeXCSSURL  string
-	KaTeXJSURL   string
-	MermaidJSURL string
+	BootstrapURL         string
+	KaTeXCSSURL          string
+	KaTeXJSURL           string
+	MermaidJSURL         string
+	PrismCoreJSURL       string
+	PrismAutoloaderJSURL string
+	PrismLanguagesPath   string
 }
 
 type PostSummary struct {

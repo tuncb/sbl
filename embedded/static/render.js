@@ -10,7 +10,14 @@
     document.querySelectorAll(".sbl-math-inline, .sbl-math-display")
   );
   const mermaidNodes = Array.from(document.querySelectorAll("pre.sbl-mermaid"));
-  if (mathNodes.length === 0 && mermaidNodes.length === 0) {
+  const codeNodes = Array.from(
+    document.querySelectorAll('code[class*="language-"]')
+  );
+  if (
+    mathNodes.length === 0 &&
+    mermaidNodes.length === 0 &&
+    codeNodes.length === 0
+  ) {
     return;
   }
 
@@ -394,7 +401,44 @@
     }
   }
 
-  Promise.all([renderMath(), renderMermaid()]).catch((error) => {
+  async function renderCode() {
+    if (codeNodes.length === 0) {
+      return;
+    }
+
+    window.Prism = window.Prism || {};
+    window.Prism.manual = true;
+
+    try {
+      await loadScript(script.dataset.prismCoreJsUrl);
+      await loadScript(script.dataset.prismAutoloaderJsUrl);
+    } catch (error) {
+      console.error("sbl code load failure:", errorMessage(error));
+      return;
+    }
+
+    const prism = window.Prism;
+    if (!prism || typeof prism.highlightAllUnder !== "function") {
+      console.error(
+        "sbl code load failure:",
+        "Prism did not expose a browser highlight API"
+      );
+      return;
+    }
+
+    if (
+      prism.plugins &&
+      prism.plugins.autoloader &&
+      typeof script.dataset.prismLanguagesPath === "string"
+    ) {
+      prism.plugins.autoloader.languages_path =
+        script.dataset.prismLanguagesPath;
+    }
+
+    prism.highlightAllUnder(document);
+  }
+
+  Promise.all([renderMath(), renderMermaid(), renderCode()]).catch((error) => {
     console.error("sbl client rendering failed:", errorMessage(error));
   });
 })();
