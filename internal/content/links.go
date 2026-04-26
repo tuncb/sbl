@@ -9,15 +9,20 @@ import (
 
 var markdownLinkPattern = regexp.MustCompile(`!?\[[^\]]*\]\(([^)]+)\)`)
 
+type markdownLink struct {
+	URL  string
+	Line int
+}
+
 func CollectLocalAssetRefs(markdown string) []string {
 	links := collectMarkdownLinks(markdown)
 	results := make([]string, 0)
 	seen := map[string]struct{}{}
 	for _, link := range links {
-		if strings.HasPrefix(link, "assets/") {
-			if _, exists := seen[link]; !exists {
-				seen[link] = struct{}{}
-				results = append(results, link)
+		if strings.HasPrefix(link.URL, "assets/") {
+			if _, exists := seen[link.URL]; !exists {
+				seen[link.URL] = struct{}{}
+				results = append(results, link.URL)
 			}
 		}
 	}
@@ -29,12 +34,30 @@ func CollectInternalLinks(markdown string) []string {
 	results := make([]string, 0)
 	seen := map[string]struct{}{}
 	for _, link := range links {
-		if isExternalLink(link) {
+		if isExternalLink(link.URL) {
 			continue
 		}
-		if strings.HasPrefix(link, "/") {
-			if _, exists := seen[link]; !exists {
-				seen[link] = struct{}{}
+		if strings.HasPrefix(link.URL, "/") {
+			if _, exists := seen[link.URL]; !exists {
+				seen[link.URL] = struct{}{}
+				results = append(results, link.URL)
+			}
+		}
+	}
+	return results
+}
+
+func collectInternalLinks(markdown string) []markdownLink {
+	links := collectMarkdownLinks(markdown)
+	results := make([]markdownLink, 0)
+	seen := map[string]struct{}{}
+	for _, link := range links {
+		if isExternalLink(link.URL) {
+			continue
+		}
+		if strings.HasPrefix(link.URL, "/") {
+			if _, exists := seen[link.URL]; !exists {
+				seen[link.URL] = struct{}{}
 				results = append(results, link)
 			}
 		}
@@ -63,14 +86,14 @@ func NormalizeURLPath(raw string) (string, error) {
 	return cleaned, nil
 }
 
-func collectMarkdownLinks(markdown string) []string {
+func collectMarkdownLinks(markdown string) []markdownLink {
 	lines := strings.Split(markdown, "\n")
-	links := make([]string, 0)
+	links := make([]markdownLink, 0)
 	var fenceChar byte
 	var fenceLen int
 	inFence := false
 
-	for _, rawLine := range lines {
+	for lineIndex, rawLine := range lines {
 		line := strings.TrimRight(rawLine, "\r")
 		if !inFence {
 			if matched, char, count, _ := parseFence(line); matched {
@@ -83,7 +106,10 @@ func collectMarkdownLinks(markdown string) []string {
 			for _, match := range matches {
 				link := strings.Trim(strings.TrimSpace(match[1]), "<>")
 				if link != "" {
-					links = append(links, link)
+					links = append(links, markdownLink{
+						URL:  link,
+						Line: lineIndex + 1,
+					})
 				}
 			}
 			continue

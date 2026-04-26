@@ -30,10 +30,11 @@ func parsePostFile(path, slug string) (*Post, error) {
 		return nil, fmt.Errorf("read %s: %w", path, err)
 	}
 
-	fmData, body, err := splitFrontMatter(data)
+	fmData, body, bodyLine, err := splitFrontMatter(data)
 	if err != nil {
 		return nil, fmt.Errorf("parse front matter in %s: %w", path, err)
 	}
+	markdownBody, markdownLine := trimMarkdownBody(body, bodyLine)
 
 	var fm frontMatter
 	if err := yaml.Unmarshal(fmData, &fm); err != nil {
@@ -67,7 +68,8 @@ func parsePostFile(path, slug string) (*Post, error) {
 		Aliases:       fm.Aliases,
 		Description:   strings.TrimSpace(fm.Description),
 		Image:         strings.TrimSpace(fm.Image),
-		MarkdownBody:  strings.TrimSpace(body),
+		MarkdownBody:  markdownBody,
+		MarkdownLine:  markdownLine,
 		CanonicalPath: "/posts/" + slug + "/",
 	}, nil
 }
@@ -78,10 +80,11 @@ func parsePageFile(path, slug string) (*Page, error) {
 		return nil, fmt.Errorf("read %s: %w", path, err)
 	}
 
-	fmData, body, err := splitFrontMatter(data)
+	fmData, body, bodyLine, err := splitFrontMatter(data)
 	if err != nil {
 		return nil, fmt.Errorf("parse front matter in %s: %w", path, err)
 	}
+	markdownBody, markdownLine := trimMarkdownBody(body, bodyLine)
 
 	var fm frontMatter
 	if err := yaml.Unmarshal(fmData, &fm); err != nil {
@@ -98,15 +101,16 @@ func parsePageFile(path, slug string) (*Page, error) {
 		Aliases:       fm.Aliases,
 		Description:   strings.TrimSpace(fm.Description),
 		Image:         strings.TrimSpace(fm.Image),
-		MarkdownBody:  strings.TrimSpace(body),
+		MarkdownBody:  markdownBody,
+		MarkdownLine:  markdownLine,
 		CanonicalPath: "/pages/" + slug + "/",
 	}, nil
 }
 
-func splitFrontMatter(data []byte) ([]byte, string, error) {
+func splitFrontMatter(data []byte) ([]byte, string, int, error) {
 	lines := bytes.Split(data, []byte("\n"))
 	if len(lines) == 0 || strings.TrimSpace(string(lines[0])) != "---" {
-		return nil, "", errors.New("missing opening --- line")
+		return nil, "", 0, errors.New("missing opening --- line")
 	}
 
 	var frontMatterLines [][]byte
@@ -114,12 +118,29 @@ func splitFrontMatter(data []byte) ([]byte, string, error) {
 		line := strings.TrimRight(string(lines[index]), "\r")
 		if strings.TrimSpace(line) == "---" {
 			body := bytes.Join(lines[index+1:], []byte("\n"))
-			return bytes.Join(frontMatterLines, []byte("\n")), string(body), nil
+			return bytes.Join(frontMatterLines, []byte("\n")), string(body), index + 2, nil
 		}
 		frontMatterLines = append(frontMatterLines, []byte(line))
 	}
 
-	return nil, "", errors.New("missing closing --- line")
+	return nil, "", 0, errors.New("missing closing --- line")
+}
+
+func trimMarkdownBody(body string, startLine int) (string, int) {
+	line := startLine
+	for _, char := range body {
+		if !isMarkdownTrimSpace(char) {
+			break
+		}
+		if char == '\n' {
+			line++
+		}
+	}
+	return strings.TrimSpace(body), line
+}
+
+func isMarkdownTrimSpace(char rune) bool {
+	return char == ' ' || char == '\t' || char == '\n' || char == '\r' || char == '\v' || char == '\f'
 }
 
 func parseDate(value string) (time.Time, error) {

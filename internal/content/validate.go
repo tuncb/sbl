@@ -61,11 +61,11 @@ func Validate(posts []*Post, pages []*Page, includeDrafts bool) (*Site, error) {
 
 	for _, post := range activePosts {
 		validateLocalAssets(post.SourceDir, post.SourcePath, post.MarkdownBody, errs)
-		validateInternalLinks(post.SourcePath, post.MarkdownBody, knownPaths, errs)
+		validateInternalLinks(post.SourcePath, post.MarkdownBody, post.MarkdownLine, knownPaths, errs)
 	}
 	for _, page := range activePages {
 		validateLocalAssets(page.SourceDir, page.SourcePath, page.MarkdownBody, errs)
-		validateInternalLinks(page.SourcePath, page.MarkdownBody, knownPaths, errs)
+		validateInternalLinks(page.SourcePath, page.MarkdownBody, page.MarkdownLine, knownPaths, errs)
 	}
 
 	if err := errs.ErrOrNil(); err != nil {
@@ -116,18 +116,19 @@ func validateLocalAssets(sourceDir, sourcePath, markdown string, errs *Validatio
 	}
 }
 
-func validateInternalLinks(sourcePath, markdown string, knownPaths map[string]struct{}, errs *ValidationErrors) {
-	for _, rawLink := range CollectInternalLinks(markdown) {
-		route, err := NormalizeURLPath(rawLink)
+func validateInternalLinks(sourcePath, markdown string, markdownLine int, knownPaths map[string]struct{}, errs *ValidationErrors) {
+	for _, link := range collectInternalLinks(markdown) {
+		route, err := NormalizeURLPath(link.URL)
+		sourceLine := markdownLine + link.Line - 1
 		if err != nil {
-			errs.Add(fmt.Sprintf("invalid internal link %q in %s: %v", rawLink, sourcePath, err))
+			errs.Add(fmt.Sprintf("invalid internal link %q in %s:%d: %v", link.URL, sourcePath, sourceLine, err))
 			continue
 		}
 		if strings.HasPrefix(route, "/assets/") {
 			continue
 		}
 		if _, exists := knownPaths[route]; !exists {
-			errs.Add(fmt.Sprintf("broken internal link %q in %s", route, sourcePath))
+			errs.Add(fmt.Sprintf("broken internal link %q in %s:%d (markdown target %q)", route, sourcePath, sourceLine, link.URL))
 		}
 	}
 }

@@ -19,6 +19,7 @@ type Post struct {
 	Description   string
 	Image         string
 	MarkdownBody  string
+	MarkdownLine  int
 	CanonicalPath string
 }
 
@@ -33,6 +34,7 @@ type Page struct {
 	Description   string
 	Image         string
 	MarkdownBody  string
+	MarkdownLine  int
 	CanonicalPath string
 }
 

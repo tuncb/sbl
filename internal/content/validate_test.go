@@ -94,6 +94,13 @@ func TestValidateReportsBrokenLink(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), `broken internal link "/posts/does-not-exist/"`) {
 		t.Fatalf("expected broken link error, got: %v", err)
 	}
+	sourcePath := filepath.Join(root, "content", "posts", "broken-link", "index.md")
+	if !strings.Contains(err.Error(), sourcePath+":9") {
+		t.Fatalf("expected broken link error to include source line, got: %v", err)
+	}
+	if !strings.Contains(err.Error(), `markdown target "/posts/does-not-exist/"`) {
+		t.Fatalf("expected broken link error to include markdown target, got: %v", err)
+	}
 }
 
 func TestValidateReportsAliasCollision(t *testing.T) {
