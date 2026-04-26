@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"sbl/internal/app"
+	"sbl/internal/console"
 )
 
 var (
@@ -17,6 +19,7 @@ var (
 	liveFn               = app.Live
 	validateFn           = app.Validate
 	stdout     io.Writer = os.Stdout
+	stderr     io.Writer = os.Stderr
 )
 
 func main() {
@@ -25,7 +28,7 @@ func main() {
 
 func run(args []string) int {
 	if len(args) == 0 {
-		printUsage(os.Stderr)
+		printUsage(stderr)
 		return 2
 	}
 
@@ -41,18 +44,17 @@ func run(args []string) int {
 	case "version":
 		return runVersion(args[1:])
 	case "-h", "--help", "help":
-		printUsage(os.Stdout)
+		printUsage(stdout)
 		return 0
 	default:
-		fmt.Fprintf(os.Stderr, "unknown command %q\n", args[0])
-		printUsage(os.Stderr)
+		console.Errorf(stderr, "unknown command %q\n", args[0])
+		printUsage(stderr)
 		return 2
 	}
 }
 
 func runBuild(args []string) int {
-	flags := flag.NewFlagSet("build", flag.ContinueOnError)
-	flags.SetOutput(os.Stderr)
+	flags := newCommandFlagSet("build")
 	outDir := flags.String("out", "", "output directory")
 	baseURL := flags.String("base-url", "", "site base URL override")
 	includeDrafts := flags.Bool("include-drafts", false, "include draft posts")
@@ -63,14 +65,14 @@ func runBuild(args []string) int {
 		"base-url": {},
 	})
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		console.Errorf(stderr, "%v\n", err)
 		return 2
 	}
-	if err := flags.Parse(args); err != nil {
-		return 2
+	if ok, code := parseCommandFlags(flags, args); !ok {
+		return code
 	}
 	if flags.NArg() != 1 {
-		fmt.Fprintln(os.Stderr, "build requires exactly one site-root argument")
+		console.Errorf(stderr, "build requires exactly one site-root argument\n")
 		return 2
 	}
 
@@ -83,15 +85,14 @@ func runBuild(args []string) int {
 		Stdout:        stdout,
 		Timings:       *timings,
 	}); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		console.Errorf(stderr, "%v\n", err)
 		return 1
 	}
 	return 0
 }
 
 func runValidate(args []string) int {
-	flags := flag.NewFlagSet("validate", flag.ContinueOnError)
-	flags.SetOutput(os.Stderr)
+	flags := newCommandFlagSet("validate")
 	baseURL := flags.String("base-url", "", "site base URL override")
 	includeDrafts := flags.Bool("include-drafts", false, "include draft posts")
 	timings := flags.Bool("timings", false, "print execution timings")
@@ -99,14 +100,14 @@ func runValidate(args []string) int {
 		"base-url": {},
 	})
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		console.Errorf(stderr, "%v\n", err)
 		return 2
 	}
-	if err := flags.Parse(args); err != nil {
-		return 2
+	if ok, code := parseCommandFlags(flags, args); !ok {
+		return code
 	}
 	if flags.NArg() != 1 {
-		fmt.Fprintln(os.Stderr, "validate requires exactly one site-root argument")
+		console.Errorf(stderr, "validate requires exactly one site-root argument\n")
 		return 2
 	}
 
@@ -117,15 +118,14 @@ func runValidate(args []string) int {
 		Stdout:        stdout,
 		Timings:       *timings,
 	}); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		console.Errorf(stderr, "%v\n", err)
 		return 1
 	}
 	return 0
 }
 
 func runLive(args []string) int {
-	flags := flag.NewFlagSet("live", flag.ContinueOnError)
-	flags.SetOutput(os.Stderr)
+	flags := newCommandFlagSet("live")
 	outDir := flags.String("out", "", "output directory")
 	baseURL := flags.String("base-url", "", "site base URL override")
 	includeDrafts := flags.Bool("include-drafts", false, "include draft posts")
@@ -135,14 +135,14 @@ func runLive(args []string) int {
 		"base-url": {},
 	})
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		console.Errorf(stderr, "%v\n", err)
 		return 2
 	}
-	if err := flags.Parse(args); err != nil {
-		return 2
+	if ok, code := parseCommandFlags(flags, args); !ok {
+		return code
 	}
 	if flags.NArg() != 1 {
-		fmt.Fprintln(os.Stderr, "live requires exactly one site-root argument")
+		console.Errorf(stderr, "live requires exactly one site-root argument\n")
 		return 2
 	}
 
@@ -153,24 +153,23 @@ func runLive(args []string) int {
 		IncludeDrafts: *includeDrafts,
 		Timings:       *timings,
 		Stdout:        stdout,
-		Stderr:        os.Stderr,
+		Stderr:        stderr,
 	}); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		console.Errorf(stderr, "%v\n", err)
 		return 1
 	}
 	return 0
 }
 
 func runVersion(args []string) int {
-	flags := flag.NewFlagSet("version", flag.ContinueOnError)
-	flags.SetOutput(os.Stderr)
+	flags := newCommandFlagSet("version")
 	timings := flags.Bool("timings", false, "print execution timings")
 	start := time.Now()
-	if err := flags.Parse(args); err != nil {
-		return 2
+	if ok, code := parseCommandFlags(flags, args); !ok {
+		return code
 	}
 	if flags.NArg() != 0 {
-		fmt.Fprintln(os.Stderr, "version does not accept arguments")
+		console.Errorf(stderr, "version does not accept arguments\n")
 		return 2
 	}
 
@@ -179,6 +178,25 @@ func runVersion(args []string) int {
 		fmt.Fprintf(stdout, "timings:\n  total: %s\n", time.Since(start).Round(time.Microsecond))
 	}
 	return 0
+}
+
+func newCommandFlagSet(name string) *flag.FlagSet {
+	flags := flag.NewFlagSet(name, flag.ContinueOnError)
+	flags.SetOutput(io.Discard)
+	return flags
+}
+
+func parseCommandFlags(flags *flag.FlagSet, args []string) (bool, int) {
+	if err := flags.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			flags.SetOutput(stdout)
+			flags.Usage()
+			return false, 0
+		}
+		console.Errorf(stderr, "%v\n", err)
+		return false, 2
+	}
+	return true, 0
 }
 
 func printUsage(out io.Writer) {

@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"reflect"
 	"time"
+
+	"sbl/internal/console"
 )
 
 const (
@@ -135,7 +137,7 @@ func Live(opts LiveOptions) (err error) {
 			current, err := scanLiveInputs(siteRoot)
 			report.Add("scan_inputs", time.Since(scanStart))
 			if err != nil {
-				fmt.Fprintf(stderr, "live watch scan failed: %v\n", err)
+				console.Errorf(stderr, "live watch scan failed: %v\n", err)
 				continue
 			}
 
@@ -194,7 +196,7 @@ func runLiveBuild(stdout, stderr io.Writer, opts BuildOptions, report *timingRep
 		report.Merge(prefix, buildReport)
 	}
 	if err != nil {
-		fmt.Fprintf(stderr, "live build failed: %v\n", err)
+		console.Errorf(stderr, "live build failed: %v\n", err)
 		return
 	}
 	printBuildSummary(stdout, result)

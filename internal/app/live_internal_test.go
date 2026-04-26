@@ -1,10 +1,14 @@
 package app
 
 import (
+	"bytes"
+	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
+	"sbl/internal/console"
 	"sbl/internal/testutil"
 )
 
@@ -34,5 +38,21 @@ func TestScanLiveInputsIgnoresGeneratedDeployConfig(t *testing.T) {
 	}
 	if before["deploy/sws.base.toml"] != after["deploy/sws.base.toml"] {
 		t.Fatal("generated deploy config should not affect the watched deploy override input")
+	}
+}
+
+func TestRunLiveBuildPrintsColorCodedError(t *testing.T) {
+	var stderr bytes.Buffer
+
+	runLiveBuild(io.Discard, &stderr, BuildOptions{
+		SiteRoot: t.TempDir(),
+	}, nil, "")
+
+	output := stderr.String()
+	if !strings.HasPrefix(output, console.ErrorPrefix+"live build failed: ") {
+		t.Fatalf("stderr = %q, want color-coded live build error", output)
+	}
+	if !strings.Contains(output, "site config file is required") {
+		t.Fatalf("stderr = %q, want build failure detail", output)
 	}
 }

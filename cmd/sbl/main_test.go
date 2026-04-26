@@ -2,10 +2,12 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"strings"
 	"testing"
 
 	"sbl/internal/app"
+	"sbl/internal/console"
 )
 
 func TestRunBuildAcceptsSiteRootBeforeFlags(t *testing.T) {
@@ -128,6 +130,73 @@ func TestRunValidateAcceptsSiteRootBeforeFlags(t *testing.T) {
 	}
 }
 
+func TestRunUnknownCommandPrintsColorCodedError(t *testing.T) {
+	got := captureStderr(t)
+
+	code := run([]string{"missing"})
+	if code != 2 {
+		t.Fatalf("run returned %d", code)
+	}
+
+	output := got.String()
+	if !strings.HasPrefix(output, console.ErrorPrefix+"unknown command \"missing\"\n") {
+		t.Fatalf("stderr = %q, want color-coded error prefix", output)
+	}
+	if !strings.Contains(output, "Usage:\n") {
+		t.Fatalf("stderr = %q, want usage after error", output)
+	}
+}
+
+func TestRunBuildMissingFlagValuePrintsColorCodedError(t *testing.T) {
+	got := captureStderr(t)
+
+	code := run([]string{"build", "--out"})
+	if code != 2 {
+		t.Fatalf("run returned %d", code)
+	}
+
+	want := console.ErrorPrefix + "flag \"--out\" requires a value\n"
+	if got.String() != want {
+		t.Fatalf("stderr = %q, want %q", got.String(), want)
+	}
+}
+
+func TestRunBuildUnknownFlagPrintsColorCodedError(t *testing.T) {
+	got := captureStderr(t)
+
+	code := run([]string{"build", "--missing", "./site"})
+	if code != 2 {
+		t.Fatalf("run returned %d", code)
+	}
+
+	want := console.ErrorPrefix + "flag provided but not defined: -missing\n"
+	if got.String() != want {
+		t.Fatalf("stderr = %q, want %q", got.String(), want)
+	}
+}
+
+func TestRunBuildFailurePrintsColorCodedError(t *testing.T) {
+	original := buildFn
+	t.Cleanup(func() {
+		buildFn = original
+	})
+
+	got := captureStderr(t)
+	buildFn = func(opts app.BuildOptions) error {
+		return errors.New("build failed")
+	}
+
+	code := run([]string{"build", "./site"})
+	if code != 1 {
+		t.Fatalf("run returned %d", code)
+	}
+
+	want := console.ErrorPrefix + "build failed\n"
+	if got.String() != want {
+		t.Fatalf("stderr = %q, want %q", got.String(), want)
+	}
+}
+
 func TestRunVersionFlagPrintsVersion(t *testing.T) {
 	original := stdout
 	t.Cleanup(func() {
@@ -187,4 +256,16 @@ func TestRunVersionWithTimingsPrintsTimingSummary(t *testing.T) {
 	if !strings.Contains(output, "timings:\n  total: ") {
 		t.Fatalf("stdout = %q, want timing summary", output)
 	}
+}
+
+func captureStderr(t *testing.T) *bytes.Buffer {
+	t.Helper()
+
+	original := stderr
+	var got bytes.Buffer
+	stderr = &got
+	t.Cleanup(func() {
+		stderr = original
+	})
+	return &got
 }
