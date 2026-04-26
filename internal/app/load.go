@@ -3,6 +3,7 @@ package app
 import (
 	"time"
 
+	"sbl/internal/assets"
 	"sbl/internal/content"
 	"sbl/internal/site"
 )
@@ -11,6 +12,10 @@ func loadValidatedSite(siteRoot, baseURL string, requireBaseURL, includeDrafts b
 	start := time.Now()
 	cfg, err := site.Load(siteRoot, baseURL, requireBaseURL)
 	report.Add("load_site_config", time.Since(start))
+	if err != nil {
+		return site.Config{}, nil, err
+	}
+	cfg.PrismTheme, err = assets.NormalizePrismTheme(cfg.PrismTheme)
 	if err != nil {
 		return site.Config{}, nil, err
 	}

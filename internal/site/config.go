@@ -14,6 +14,7 @@ type Config struct {
 	Language    string    `yaml:"language"`
 	Author      string    `yaml:"author"`
 	Navigation  []NavLink `yaml:"navigation"`
+	PrismTheme  string    `yaml:"prism_theme"`
 }
 
 func (c Config) CanonicalURL(relPath string) string {

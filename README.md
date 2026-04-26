@@ -103,11 +103,20 @@ title: "My Blog"
 base_url: "https://example.com"
 ```
 
+Optional Prism syntax highlighting theme:
+
+```yaml
+prism_theme: okaidia
+```
+
+Supported Prism themes are `prism`, `coy`, `dark`, `funky`, `okaidia`, `solarizedlight`, `tomorrow`, and `twilight`.
+
 ## Tooling
 
 KaTeX, Mermaid, and Prism ship as self-hosted browser assets committed in the repo.
 
 Pages that contain math, Mermaid fences, or fenced code blocks with a language identifier load those assets client-side from `/assets/vendor/...`.
+When code highlighting is used, only the configured Prism theme stylesheet and required language components are published.
 
 Builds do not require Node, npm, or a browser install.
 Builds do not require checked-out repo templates, static assets, or deploy defaults next to the executable.

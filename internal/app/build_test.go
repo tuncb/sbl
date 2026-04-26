@@ -221,6 +221,48 @@ func TestBuildRichSite(t *testing.T) {
 	}
 }
 
+func TestBuildRichSiteUsesConfiguredPrismTheme(t *testing.T) {
+	root := testutil.CopyFixture(t, "site-rich-content")
+	configPath := filepath.Join(root, "config", "site.yaml")
+	config := testutil.ReadFile(t, configPath) + "prism_theme: okaidia\n"
+	if err := os.WriteFile(configPath, []byte(config), 0o644); err != nil {
+		t.Fatalf("WriteFile returned error: %v", err)
+	}
+
+	err := app.Build(app.BuildOptions{
+		SiteRoot: root,
+		Clean:    true,
+	})
+	if err != nil {
+		t.Fatalf("Build returned error: %v", err)
+	}
+
+	postHTML := testutil.ReadFile(t, filepath.Join(root, "public", "posts", "rich-content", "index.html"))
+	if !strings.Contains(postHTML, `href="/assets/vendor/prism-1.30.0/themes/prism-okaidia.min.css"`) {
+		t.Fatalf("post page missing configured Prism theme: %s", postHTML)
+	}
+	testutil.MustGlobOne(t, filepath.Join(root, "public", "assets", "vendor", "prism-*", "themes", "prism-okaidia.min.css"))
+	if matches, err := filepath.Glob(filepath.Join(root, "public", "assets", "vendor", "prism-*", "themes", "prism.min.css")); err != nil {
+		t.Fatalf("glob returned error: %v", err)
+	} else if len(matches) != 0 {
+		t.Fatalf("unexpected default Prism theme copied: %v", matches)
+	}
+}
+
+func TestValidateRejectsUnknownPrismTheme(t *testing.T) {
+	root := testutil.CopyFixture(t, "site-basic")
+	configPath := filepath.Join(root, "config", "site.yaml")
+	config := testutil.ReadFile(t, configPath) + "prism_theme: missing\n"
+	if err := os.WriteFile(configPath, []byte(config), 0o644); err != nil {
+		t.Fatalf("WriteFile returned error: %v", err)
+	}
+
+	err := app.Validate(app.ValidateOptions{SiteRoot: root})
+	if err == nil || !strings.Contains(err.Error(), `unknown prism_theme "missing"`) {
+		t.Fatalf("expected unknown Prism theme error, got: %v", err)
+	}
+}
+
 func TestBuildPrunesUnusedVendorAssetsOnRebuild(t *testing.T) {
 	root := testutil.CopyFixture(t, "site-rich-content")
 

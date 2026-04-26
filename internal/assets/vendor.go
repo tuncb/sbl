@@ -13,6 +13,7 @@ const (
 	katexVersionDir   = "katex-0.16.45"
 	mermaidVersionDir = "mermaid-11.14.0"
 	prismVersionDir   = "prism-1.30.0"
+	defaultPrismTheme = "prism"
 )
 
 type VendorAssets struct {
@@ -29,21 +30,67 @@ type VendorRequest struct {
 	IncludeKaTeX   bool
 	IncludeMermaid bool
 	PrismLanguages []string
+	PrismTheme     string
 }
 
-func DefaultVendorAssets() VendorAssets {
+var prismThemeFiles = map[string]string{
+	"prism":          path.Join(prismVersionDir, "themes", "prism.min.css"),
+	"coy":            path.Join(prismVersionDir, "themes", "prism-coy.min.css"),
+	"dark":           path.Join(prismVersionDir, "themes", "prism-dark.min.css"),
+	"funky":          path.Join(prismVersionDir, "themes", "prism-funky.min.css"),
+	"okaidia":        path.Join(prismVersionDir, "themes", "prism-okaidia.min.css"),
+	"solarizedlight": path.Join(prismVersionDir, "themes", "prism-solarizedlight.min.css"),
+	"tomorrow":       path.Join(prismVersionDir, "themes", "prism-tomorrow.min.css"),
+	"twilight":       path.Join(prismVersionDir, "themes", "prism-twilight.min.css"),
+}
+
+func DefaultPrismTheme() string {
+	return defaultPrismTheme
+}
+
+func SupportedPrismThemes() []string {
+	themes := make([]string, 0, len(prismThemeFiles))
+	for theme := range prismThemeFiles {
+		themes = append(themes, theme)
+	}
+	sort.Strings(themes)
+	return themes
+}
+
+func NormalizePrismTheme(theme string) (string, error) {
+	normalized := strings.ToLower(strings.TrimSpace(theme))
+	if normalized == "" {
+		normalized = defaultPrismTheme
+	}
+	if _, ok := prismThemeFiles[normalized]; !ok {
+		return "", fmt.Errorf("unknown prism_theme %q; supported themes: %s", theme, strings.Join(SupportedPrismThemes(), ", "))
+	}
+	return normalized, nil
+}
+
+func DefaultVendorAssets(prismTheme string) (VendorAssets, error) {
+	theme, err := NormalizePrismTheme(prismTheme)
+	if err != nil {
+		return VendorAssets{}, err
+	}
+	prismThemeFile := prismThemeFiles[theme]
 	return VendorAssets{
 		KaTeXCSSURL:          "/" + path.Join("assets", "vendor", katexVersionDir, "katex.min.css"),
 		KaTeXJSURL:           "/" + path.Join("assets", "vendor", katexVersionDir, "katex.min.js"),
 		MermaidJSURL:         "/" + path.Join("assets", "vendor", mermaidVersionDir, "mermaid.min.js"),
-		PrismCSSURL:          "/" + path.Join("assets", "vendor", prismVersionDir, "themes", "prism.min.css"),
+		PrismCSSURL:          "/" + path.Join("assets", "vendor", prismThemeFile),
 		PrismCoreJSURL:       "/" + path.Join("assets", "vendor", prismVersionDir, "components", "prism-core.min.js"),
 		PrismAutoloaderJSURL: "/" + path.Join("assets", "vendor", prismVersionDir, "plugins", "autoloader", "prism-autoloader.min.js"),
 		PrismLanguagesPath:   "/" + path.Join("assets", "vendor", prismVersionDir, "components") + "/",
-	}
+	}, nil
 }
 
 func BuildVendorFiles(request VendorRequest) ([]File, VendorAssets, error) {
+	vendorAssets, err := DefaultVendorAssets(request.PrismTheme)
+	if err != nil {
+		return nil, VendorAssets{}, err
+	}
+
 	files := map[string][]byte{}
 	if err := readFSFiles(embedded.Vendor, files); err != nil {
 		return nil, VendorAssets{}, err
@@ -81,7 +128,11 @@ func BuildVendorFiles(request VendorRequest) ([]File, VendorAssets, error) {
 		}
 	}
 	if len(request.PrismLanguages) > 0 {
-		if err := requireFile(path.Join(prismVersionDir, "themes", "prism.min.css"), "Prism stylesheet"); err != nil {
+		theme, err := NormalizePrismTheme(request.PrismTheme)
+		if err != nil {
+			return nil, VendorAssets{}, err
+		}
+		if err := requireFile(prismThemeFiles[theme], "Prism stylesheet"); err != nil {
 			return nil, VendorAssets{}, err
 		}
 		if err := requireFile(path.Join(prismVersionDir, "components", "prism-core.min.js"), "Prism core script"); err != nil {
@@ -121,5 +172,5 @@ func BuildVendorFiles(request VendorRequest) ([]File, VendorAssets, error) {
 		})
 	}
 
-	return out, DefaultVendorAssets(), nil
+	return out, vendorAssets, nil
 }

@@ -54,7 +54,7 @@ func (usage *vendorUsage) add(features render.Features) {
 	}
 }
 
-func (usage vendorUsage) request() assets.VendorRequest {
+func (usage vendorUsage) request(prismTheme string) assets.VendorRequest {
 	languages := make([]string, 0, len(usage.prismLanguages))
 	for language := range usage.prismLanguages {
 		languages = append(languages, language)
@@ -64,6 +64,7 @@ func (usage vendorUsage) request() assets.VendorRequest {
 		IncludeKaTeX:   usage.needsMath,
 		IncludeMermaid: usage.needsMermaid,
 		PrismLanguages: languages,
+		PrismTheme:     prismTheme,
 	}
 }
 
@@ -139,7 +140,10 @@ func buildSite(opts BuildOptions, report *timingReport) (_ buildResult, err erro
 		return buildResult{}, err
 	}
 
-	vendorAssets := assets.DefaultVendorAssets()
+	vendorAssets, err := assets.DefaultVendorAssets(cfg.PrismTheme)
+	if err != nil {
+		return buildResult{}, err
+	}
 	var usedVendors vendorUsage
 	postSummaries := make([]render.PostSummary, 0, len(graph.Posts))
 	if err := measureTiming(report, "render_posts", func() error {
@@ -237,7 +241,7 @@ func buildSite(opts BuildOptions, report *timingReport) (_ buildResult, err erro
 		if err := os.RemoveAll(vendorDir); err != nil {
 			return err
 		}
-		vendorFiles, _, err := assets.BuildVendorFiles(usedVendors.request())
+		vendorFiles, _, err := assets.BuildVendorFiles(usedVendors.request(cfg.PrismTheme))
 		if err != nil {
 			return err
 		}
