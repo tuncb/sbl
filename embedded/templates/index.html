@@ -2,7 +2,6 @@
 
 {{ define "body" -}}
 <section class="page-intro">
-  <p class="eyebrow">Static blog</p>
   <h1>{{ .Site.Title }}</h1>
   {{- if .Site.Description }}
   <p class="lead">{{ .Site.Description }}</p>
@@ -17,6 +16,13 @@
       <p class="post-date">{{ .Date }}</p>
       <h2><a href="{{ .URL }}">{{ .Title }}</a></h2>
       <p>{{ .Summary }}</p>
+      {{- if .Tags }}
+      <ul class="post-tags" aria-label="Tags">
+        {{- range .Tags }}
+        <li>{{ . }}</li>
+        {{- end }}
+      </ul>
+      {{- end }}
     </li>
     {{- end }}
   </ul>

@@ -45,6 +45,7 @@ type PostSummary struct {
 	Summary string
 	URL     string
 	Date    string
+	Tags    []string
 }
 
 type ListPageData struct {
@@ -59,6 +60,7 @@ type PostView struct {
 	Date        string
 	Updated     string
 	ReadingTime int
+	Tags        []string
 }
 
 type PostPageData struct {
@@ -137,6 +139,7 @@ func MakePostSummary(post *content.Post) PostSummary {
 		Summary: post.Summary,
 		URL:     post.CanonicalPath,
 		Date:    post.Date.Format("2006-01-02"),
+		Tags:    post.Tags,
 	}
 }
 
@@ -188,6 +191,7 @@ func RenderPostPage(engine *Engine, cfg site.Config, stylesheetURL string, extra
 			Date:        post.Date.Format("2006-01-02"),
 			Updated:     formatOptionalDate(post.Updated),
 			ReadingTime: readingTime,
+			Tags:        post.Tags,
 		},
 	})
 	if err != nil {

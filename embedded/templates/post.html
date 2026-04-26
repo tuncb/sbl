@@ -13,6 +13,13 @@
       <span>{{ .Post.ReadingTime }} min read</span>
     </div>
     <p class="lead">{{ .Post.Summary }}</p>
+    {{- if .Post.Tags }}
+    <ul class="post-tags" aria-label="Tags">
+      {{- range .Post.Tags }}
+      <li>{{ . }}</li>
+      {{- end }}
+    </ul>
+    {{- end }}
   </header>
   <div class="article-body">{{ .Post.BodyHTML }}</div>
 </article>

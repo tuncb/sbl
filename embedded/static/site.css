@@ -122,6 +122,24 @@ code {
   flex-wrap: wrap;
 }
 
+.post-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  padding: 0;
+  margin: 0.75rem 0 0;
+  list-style: none;
+}
+
+.post-tags li {
+  padding: 0.1rem 0.45rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  background: var(--accent-soft);
+  font-size: 0.85rem;
+}
+
 .article-body > * + * {
   margin-top: 1rem;
 }
